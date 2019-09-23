@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE suppressions PUBLIC
+    "-//Puppy Crawl//DTD Suppressions 1.1//EN"
+    "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
+
+<suppressions>
+  <suppress checks="JavadocType"
+            files=".+(Test|ITCase)\.java"/>
+  <suppress checks="AbbreviationAsWordInName" files=".+ITCase\.java"/>
+    <!-- mvn module ==>  com.philips.cmw:serializer-advisor-changedcanonical -->
+    <suppress checks="AbbreviationAsWordInName"
+              files="(ChangedCanonical|CanonicalProductTriggerFactory|PCMSProductFilter|PublishedHCProductFilter)\.java"/>
+    <!-- mvn module ==> com.philips.cmw:serializer-advisor-model -->
+  <suppress checks="AbbreviationAsWordInName" files="(AdvisorProductRepository)\.java"/>
+  <!-- Spring Boot Configuration classes across modules -->
+  <suppress checks="JavadocMethod" files="(.+HealthMonitorConfig|RestoreJobConfiguration|BackupJobConfiguration|MigrationToolBaseConfiguration)\.java"/>
+
+  <suppress checks="AbbreviationAsWordInName" files="com[\\/]philips[\\/]cmw[\\/]migrationtool[\\/]"/>
+</suppressions>
