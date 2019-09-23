@@ -13,6 +13,10 @@ provider "template" {
   version = "~> 2.1"
 }
 
+#set AWS_ACCESS_KEY_ID=AKIARMNZ6SY7DEONVDFZ
+#set AWS_SECRET_ACCESS_KEY=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
+#set AWS_DEFAULT_REGION=us-west-1
+
 provider "aws" {
   version = "~> 2.7"
   access_key = "AKIARMNZ6SY7PIOZDEFH"
