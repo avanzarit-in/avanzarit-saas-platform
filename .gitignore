@@ -21,6 +21,7 @@ target/
 # Local .terraform directories
 terraform/.terraform/*
 
+terraform/.terraform/plugins/**
 # .tfstate files
 *.tfstate
 *.tfstate.*
