@@ -13,25 +13,35 @@ provider "template" {
   version = "~> 2.1"
 }
 
-#set AWS_ACCESS_KEY_ID=AKIARMNZ6SY7DEONVDFZ
-#set AWS_SECRET_ACCESS_KEY=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
+variable environment {
+
+}
+
+#set AWS_ACCESS_KEY_ID=AKIA4NSURK7W26KMRDHC
+#set AWS_SECRET_ACCESS_KEY=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
 #set AWS_DEFAULT_REGION=us-west-1
 
 provider "aws" {
   version = "~> 2.7"
-  access_key = "AKIARMNZ6SY7PIOZDEFH"
-  secret_key = "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"
-  region = "us-west-1"
   max_retries = 20
 }
 
 
-resource "aws_s3_bucket" "b" {
-  bucket = "my-tf-test-bucket-avanzar"
-  acl    = "private"
+resource "aws_iam_role" "lambda_s3_role" {
+  name = "lambda_s3_role"
+  description = "It has the permissions that the function needs to manage objects in Amazon S3 and write logs to CloudWatch Logs"
+  assume_role_policy = data.template_file.lambda_s3_role_policy.rendered
 
   tags = {
-    Name        = "My bucket"
-    Environment = "Dev"
+    tag-key = "avanzarit-${var.environment}"
   }
+}
+
+resource "aws_iam_role_policy_attachment" "aws-lambda-execute-policy-attachment" {
+  role = "${aws_iam_role.lambda_s3_role.name}"
+  policy_arn = "arn:aws:iam::aws:policy/AWSLambdaExecute"
+}
+
+data "template_file" "lambda_s3_role_policy" {
+  template = "${file("${path.module}/policies/aws-lambda-execute-role-policy.json")}"
 }

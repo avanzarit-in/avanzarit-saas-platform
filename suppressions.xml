@@ -8,10 +8,10 @@
   <suppress checks="JavadocType"
             files=".+(Test|ITCase)\.java"/>
   <suppress checks="AbbreviationAsWordInName" files=".+ITCase\.java"/>
-    <!-- mvn module ==>  com.philips.cmw:serializer-advisor-changedcanonical -->
+    <!-- mvn module ==>  com.avanzarit.platform.saas.aws:serializer-advisor-changedcanonical -->
     <suppress checks="AbbreviationAsWordInName"
               files="(ChangedCanonical|CanonicalProductTriggerFactory|PCMSProductFilter|PublishedHCProductFilter)\.java"/>
-    <!-- mvn module ==> com.philips.cmw:serializer-advisor-model -->
+    <!-- mvn module ==> com.avanzarit.platform.saas.aws:serializer-advisor-model -->
   <suppress checks="AbbreviationAsWordInName" files="(AdvisorProductRepository)\.java"/>
   <!-- Spring Boot Configuration classes across modules -->
   <suppress checks="JavadocMethod" files="(.+HealthMonitorConfig|RestoreJobConfiguration|BackupJobConfiguration|MigrationToolBaseConfiguration)\.java"/>

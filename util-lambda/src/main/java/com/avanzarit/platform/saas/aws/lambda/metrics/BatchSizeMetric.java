@@ -10,7 +10,7 @@ import java.util.Date;
 /**
  * The BatchSizeMetric is one of the metrics that the system uses to determine how many events an AWS Lambda function is
  * receiving in a single batch. It's a value object that can be passed to a
- * {@link com.philips.cmw.util.CmwContext#putMetrics(CmwMetric...)} call for logging to CloudWatch.
+ * {@link com.avanzarit.platform.saas.aws.util.CmwContext#putMetrics(CmwMetric...)} call for logging to CloudWatch.
  * <p>
  * A BatchSizeMetric is a counter metric and has a single dimension: function_name (to identify the lambda function to
  * which the metric corresponds).

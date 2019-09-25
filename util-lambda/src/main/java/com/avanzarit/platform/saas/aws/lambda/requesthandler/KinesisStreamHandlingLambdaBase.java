@@ -1,41 +1,46 @@
-package com.avanzarit.platform.saas.aws.lambda;
+package com.avanzarit.platform.saas.aws.lambda.requesthandler;
 
 import com.amazonaws.regions.Region;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.amazonaws.services.lambda.runtime.events.DynamodbEvent;
-import com.avanzarit.platform.saas.aws.lambda.eventhandler.impl.DynamoEventHandler;
-import com.avanzarit.platform.saas.aws.lambda.metrics.BatchSizeMetric;
+import com.amazonaws.services.lambda.runtime.events.KinesisEvent;
 import com.avanzarit.platform.saas.aws.lambda.processors.DynamoRecordProcessor;
+import com.avanzarit.platform.saas.aws.lambda.EntityTrigger;
+import com.avanzarit.platform.saas.aws.lambda.LambdaCmwContextFactory;
+import com.avanzarit.platform.saas.aws.lambda.LambdaLoggingConfigurator;
+import com.avanzarit.platform.saas.aws.lambda.LambdaRegion;
+import com.avanzarit.platform.saas.aws.lambda.eventhandler.KinesisEventHandler;
+import com.avanzarit.platform.saas.aws.lambda.metrics.BatchSizeMetric;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * DynamoStreamHandlingLambda is a base class that allows subclasses to just handle the DynamoDb stream events that are
- * coming in without having to bother with all the boilerplate of the actual Lambda function invocation. The class
- * provides several lifecycle hooks that allow subclasses to implement custom logic without having to interact with the
- * Lambda handling code itself.
+ * KinesisStreamHandlingLambda is a base class that allows subclasses to just handle the Kinesis events that are coming
+ * in without having to bother with all the boilerplate of the actual Lambda function invocation. The class provides
+ * several lifecycle hooks that allow subclasses to implement custom logic without having to interact with the Lambda
+ * handling code itself.
  */
-public abstract class DynamoStreamHandlingLambda implements RequestHandler<DynamodbEvent, String> {
-    private static final Logger LOGGER = LogManager.getLogger(DynamoStreamHandlingLambda.class);
+public abstract class KinesisStreamHandlingLambdaBase<T extends KinesisEventHandler> implements RequestHandler<KinesisEvent, String> {
 
-    private DynamoEventHandler dynamoEventHandler;
+    private static final Logger LOGGER = LogManager.getLogger(KinesisStreamHandlingLambdaBase.class);
+
+    private T kinesisEventHandler;
     private CmwContext cmwContext;
 
     @Override
-    public String handleRequest(DynamodbEvent dynamoDbEvent, Context context) {
+    public String handleRequest(KinesisEvent event, Context context) {
         LambdaLoggingConfigurator.configureLogging(context);
 
-        if (dynamoEventHandler == null) {
+        if (kinesisEventHandler == null) {
             AmazonCloudWatch amazonCloudWatch = AmazonCloudWatchClient.builder()
                     .withRegion(LambdaRegion.getCurrentRegion())
                     .build();
 
             cmwContext = new LambdaCmwContextFactory().createContext(context, amazonCloudWatch);
-            dynamoEventHandler = new DynamoEventHandler();
+            kinesisEventHandler = getKinesisEventHandler();
 
             registerTriggers(Region.getRegion(LambdaRegion.getCurrentRegion()), cmwContext);
         }
@@ -49,10 +54,11 @@ public abstract class DynamoStreamHandlingLambda implements RequestHandler<Dynam
 
             onInvoke(cmwContext);
 
-            LOGGER.info("Received " + dynamoDbEvent.getRecords().size() + " events");
-            cmwContext.putMetrics(new BatchSizeMetric(context.getFunctionName(), dynamoDbEvent.getRecords().size()));
+            if (event != null) {
+                cmwContext.putMetrics(new BatchSizeMetric(context.getFunctionName(), event.getRecords().size()));
 
-            dynamoEventHandler.handleEvent(cmwContext, dynamoDbEvent);
+                kinesisEventHandler.handleEvent(cmwContext, event);
+            }
 
             onFinish(cmwContext);
             cmwContext.flushMetrics();
@@ -61,13 +67,15 @@ public abstract class DynamoStreamHandlingLambda implements RequestHandler<Dynam
             throw new RuntimeException(e);
         }
 
-        return "Successfully processed " + dynamoDbEvent.getRecords().size() + " records.";
+        return "ok";
     }
 
     /**
      * Subclasses can register their entity triggers as part of this method.
      */
     public abstract void registerTriggers(Region region, CmwContext cmwContext);
+
+    protected abstract T getKinesisEventHandler();
 
     /**
      * The onInvoke method is called when the Lambda function is invoked. It is an extension point that can be used in
@@ -87,6 +95,6 @@ public abstract class DynamoStreamHandlingLambda implements RequestHandler<Dynam
      * Adds an entity trigger for a table to the {@link DynamoRecordProcessor}.
      */
     public void addTrigger(String tableName, EntityTrigger<?> trigger) {
-        dynamoEventHandler.addTrigger(tableName, trigger);
+        kinesisEventHandler.addTrigger(tableName, trigger);
     }
 }

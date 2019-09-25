@@ -1,6 +1,7 @@
 package com.avanzarit.platform.saas.aws.lambda;
 
 import com.avanzarit.platform.saas.aws.dynamo.DynamoEntity;
+import com.avanzarit.platform.saas.aws.lambda.processors.DynamoRecordProcessor;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 
 /**

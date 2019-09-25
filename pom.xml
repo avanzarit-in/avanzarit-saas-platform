@@ -16,6 +16,10 @@
         <module>util-s3</module>
         <module>util-lambda</module>
         <module>util-kinesis</module>
+     <module>transformer-lambda-base</module>
+        <module>content-validation</module>
+        <module>core-model</module>
+        <module>core-services</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -250,6 +254,18 @@
 
             <dependency>
                 <groupId>com.avanzarit.platform.saas.aws</groupId>
+                <artifactId>util-lambda</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.avanzarit.platform.saas.aws</groupId>
+                <artifactId>util-kinesis</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.avanzarit.platform.saas.aws</groupId>
                 <artifactId>util-dynamo</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -257,6 +273,24 @@
             <dependency>
                 <groupId>com.avanzarit.platform.saas.aws</groupId>
                 <artifactId>util-test</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.avanzarit.platform.saas.aws</groupId>
+                <artifactId>content-validation</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.avanzarit.platform.saas.aws</groupId>
+                <artifactId>core-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.avanzarit.platform.saas.aws</groupId>
+                <artifactId>core-services</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
