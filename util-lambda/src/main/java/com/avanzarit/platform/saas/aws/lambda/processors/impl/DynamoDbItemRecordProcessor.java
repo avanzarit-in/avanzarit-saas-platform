@@ -19,7 +19,7 @@ import org.apache.logging.log4j.Logger;
 public class DynamoDbItemRecordProcessor<T extends DynamoEntity> extends DynamoDbRecordProcessor {
     private static final Logger LOGGER = LogManager.getLogger(DynamoDbItemRecordProcessor.class);
 
-    public void process(CmwContext cmwContext, T entity) {
+    public void process(CmwContext cmwContext, DynamoEntity entity) {
         try {
             String tableName = String.join("_", cmwContext.getPrefix(),
                     cmwContext.getLayer(),
@@ -32,14 +32,14 @@ public class DynamoDbItemRecordProcessor<T extends DynamoEntity> extends DynamoD
 
             LOGGER.debug("Parsed tablename: " + stn);
 
-            EntityTrigger et = (EntityTrigger) getTriggers().get(stn.getTable());
+            EntityTrigger<DynamoEntity> et = (EntityTrigger<DynamoEntity>) getTriggers().get(stn.getTable());
 
             LOGGER.debug("Update on " + tableName + " - using trigger " + et);
 
             if (et != null) {
                 LOGGER.debug("Calling EntityTrigger " + et);
 
-                DynamoDbEntityTriggerCaller<T> etc = new DynamoDbEntityTriggerCaller<T>(et);
+                DynamoDbEntityTriggerCaller<DynamoEntity> etc = new DynamoDbEntityTriggerCaller<>(et);
                 etc.call(cmwContext, entity);
             }
             LOGGER.debug("Finished processing");

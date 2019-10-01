@@ -301,6 +301,12 @@
                 <artifactId>core-services</artifactId>
                 <version>${project.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>com.avanzarit.platform.saas.aws</groupId>
+                <artifactId>transformer-lambda-base</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
 
 
