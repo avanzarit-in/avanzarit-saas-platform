@@ -1,6 +1,5 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
-import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import com.avanzarit.platform.saas.aws.util.UpdateInfo;
 
@@ -9,7 +8,7 @@ import com.avanzarit.platform.saas.aws.util.UpdateInfo;
  *
  * @param <I> The type of input entities that this filter supports.
  */
-public interface TransformationTriggerFilter<I extends CoreEntity> {
+public interface TransformationTriggerFilter<I> {
     /**
      * Determines whether the given input entity should be filtered or not.
      *

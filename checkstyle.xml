@@ -26,6 +26,7 @@
 
   <module name="TreeWalker">
     <module name="OuterTypeFilename"/>
+
     <module name="IllegalTokenText">
       <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL"/>
       <property name="format" value="\\u00(08|09|0(a|A)|0(c|C)|0(d|D)|22|27|5(C|c))|\\(0(10|11|12|14|15|42|47)|134)"/>
@@ -202,15 +203,15 @@
       <property name="target" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>
     </module>
     <module name="JavadocMethod">
+
       <property name="scope" value="public"/>
       <property name="allowMissingParamTags" value="true"/>
       <property name="allowMissingThrowsTags" value="true"/>
       <property name="allowMissingReturnTag" value="true"/>
       <property name="allowedAnnotations" value="Override, Test, Before"/>
       <property name="allowThrowsTagsForSubclasses" value="true"/>
-      <property name="allowMissingPropertyJavadoc" value="true"/>
+
       <property name="tokens" value="METHOD_DEF,ANNOTATION_FIELD_DEF"/>
-      <property name="ignoreMethodNamesRegex" value="(assertThat|getInstance|main)"/>
     </module>
     <module name="JavadocType">
       <property name="scope" value="public"/>

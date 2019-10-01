@@ -1,13 +1,10 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
+import com.avanzarit.platform.saas.aws.lambda.EntityTrigger;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import com.avanzarit.platform.saas.aws.util.UpdateInfo;
 import com.avanzarit.platform.saas.aws.util.jsonvalidation.JsonValidationErrorMetric;
-import com.avanzarit.platform.saas.aws.util.lambda.EntityTrigger;
-import com.avanzarit.platform.saas.aws.validation.SchemaValidator;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,34 +13,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A TransformationTrigger can be added to a {@link com.avanzarit.platform.saas.aws.util.lambda.DynamoStreamHandlingLambda} or a
- * {@link com.avanzarit.platform.saas.aws.util.lambda.KinesisStreamHandlingLambda}. It takes care of all the logic associated with
- * changes to a specific DynamoDb table.
+ * A TransformationTrigger can be added to a Lambda Handler.
+ * It takes care of all the logic associated with changes to a specific AWS entity (dynamoDB, S3, Kinesis) etc.
  * <p>
  * Next to handling create and update events it also provides a framework for error handling, retry and transformation
  * logic.
  *
  * @param <I> The input entity type that this trigger handles.
  */
-public class TransformationTrigger<I extends CoreEntity> implements EntityTrigger<I> {
-
+public abstract class TransformationTrigger<I, O> implements EntityTrigger<I> {
     private static final Logger LOGGER = LogManager.getLogger(TransformationTrigger.class);
 
     private Class<I> entityClass;
-    private SchemaValidator validator;
-    private ObjectMapper mapper;
-    private TransformationTriggerRetryPolicy<I> retryPolicy;
-    private List<TransformationTriggerFilter<CoreEntity>> genericFilters;
+    private TransformationTriggerRetryPolicy<CoreEntity> retryPolicy;
+    private List<TransformationTriggerFilter<I>> genericFilters;
     private List<TransformationTriggerFilter<I>> filters;
-    private List<TransformationTriggerOutputChannel<I, ? extends CoreEntity>> outputChannels;
+    private List<TransformationTriggerOutputChannel<I, ? extends O>> outputChannels;
     private List<TransformationTriggerValidationListener<I>> validationListeners;
     private List<TransformationTriggerRetryListener<I>> retryListeners;
     private List<TransformationTriggerErrorHandler<I>> errorHandlers;
 
-    public TransformationTrigger(Class<I> entityClass, SchemaValidator validator, ObjectMapper mapper) {
+    public TransformationTrigger(Class<I> entityClass) {
         this.entityClass = entityClass;
-        this.validator = validator;
-        this.mapper = mapper;
         this.genericFilters = new ArrayList<>();
         this.filters = new ArrayList<>();
         this.outputChannels = new ArrayList<>();
@@ -82,32 +73,13 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
         UpdateInfo updateInfo = createUpdateInfo(newEntity);
 
         try {
-            if (oldEntity != null) {
-                LOGGER.debug(updateInfo);
-                LOGGER.debug("Handling update from old entity: " + mapper.writeValueAsString(oldEntity)
-                        + " to new entity: " + mapper.writeValueAsString(newEntity));
-            } else {
-                LOGGER.debug(updateInfo);
-                LOGGER.debug("Handling creation of new entity: " + mapper.writeValueAsString(newEntity));
+            if (!filteredOutByInputFilters(cmwContext, updateInfo, oldEntity, newEntity)) {
+                runOutputChannelPipelines(cmwContext, oldEntity, newEntity, updateInfo);
             }
-        } catch (JsonProcessingException e) {
-            cmwContext.logError(updateInfo, "Failed to log change event", e);
+        } catch (Exception e) {
+            handleException(cmwContext, oldEntity, newEntity, updateInfo, e);
         }
 
-        if (newEntity.hasEntityBody()) {
-            try {
-                if (!filteredOutByInputFilters(cmwContext, updateInfo, oldEntity, newEntity)) {
-                    runOutputChannelPipelines(cmwContext, oldEntity, newEntity, updateInfo);
-                }
-            } catch (Exception e) {
-                handleException(cmwContext, oldEntity, newEntity, updateInfo, e);
-            }
-        } else {
-            cmwContext.logWarning(
-                    updateInfo,
-                    "Ignoring " + newEntity.getBareTableName() + " because it has no content"
-            );
-        }
     }
 
     private void handleException(CmwContext cmwContext, I oldEntity, I newEntity, UpdateInfo updateInfo, Exception e) {
@@ -123,7 +95,7 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
     }
 
     private boolean filteredOutByInputFilters(CmwContext cmwContext, UpdateInfo updateInfo, I oldEntity, I newEntity) {
-        for (TransformationTriggerFilter<CoreEntity> filter : genericFilters) {
+        for (TransformationTriggerFilter<I> filter : genericFilters) {
             if (filter.filteredOut(cmwContext, updateInfo, oldEntity, newEntity)) {
                 cmwContext.logWarning(
                         updateInfo,
@@ -147,13 +119,13 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
     }
 
     private void runOutputChannelPipelines(CmwContext cmwContext, I oldEntity, I newEntity, UpdateInfo updateInfo) {
-        List<TransformationPipeline<I, ? extends CoreEntity>> pipelines = createTransformationPipelines();
-        List<TransformationPipeline<I, ? extends CoreEntity>> applicablePipelines = filterPipelinesThatAreNotApplicable(
+        List<TransformationPipeline<I, ? extends O>> pipelines = createTransformationPipelines();
+        List<TransformationPipeline<I, ? extends O>> applicablePipelines = filterPipelinesThatAreNotApplicable(
                 pipelines, cmwContext, updateInfo, oldEntity, newEntity
         );
 
         if (!applicablePipelines.isEmpty()) {
-            List<TransformationPipeline<I, ? extends CoreEntity>> successfulPipelines = applyTransformations(
+            List<TransformationPipeline<I, ? extends O>> successfulPipelines = applyTransformations(
                     applicablePipelines, cmwContext, oldEntity, newEntity, updateInfo
             );
 
@@ -167,12 +139,12 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
         }
     }
 
-    private List<TransformationPipeline<I, ? extends CoreEntity>> filterPipelinesThatAreNotApplicable(
-            List<TransformationPipeline<I, ? extends CoreEntity>> pipelines, CmwContext cmwContext,
+    private List<TransformationPipeline<I, ? extends O>> filterPipelinesThatAreNotApplicable(
+            List<TransformationPipeline<I, ? extends O>> pipelines, CmwContext cmwContext,
             UpdateInfo updateInfo, I oldEntity, I newEntity) {
-        List<TransformationPipeline<I, ? extends CoreEntity>> applicablePipelines = new ArrayList<>();
+        List<TransformationPipeline<I, ? extends O>> applicablePipelines = new ArrayList<>();
 
-        for (TransformationPipeline<I, ? extends CoreEntity> pipeline : pipelines) {
+        for (TransformationPipeline<I, ? extends O> pipeline : pipelines) {
             if (pipeline.isApplicable(cmwContext, updateInfo, oldEntity, newEntity)) {
                 applicablePipelines.add(pipeline);
             }
@@ -181,7 +153,7 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
         return applicablePipelines;
     }
 
-    private void validateAndSaveOutput(List<TransformationPipeline<I, ? extends CoreEntity>> successfulPipelines,
+    private void validateAndSaveOutput(List<TransformationPipeline<I, ? extends O>> successfulPipelines,
                                        CmwContext cmwContext, I oldEntity, I newEntity, UpdateInfo updateInfo) {
         if (isValid(successfulPipelines)) {
             saveOutput(successfulPipelines, cmwContext, oldEntity, newEntity, updateInfo);
@@ -190,12 +162,12 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
         }
     }
 
-    private List<TransformationPipeline<I, ? extends CoreEntity>> applyTransformations(
-            List<TransformationPipeline<I, ? extends CoreEntity>> pipelines, CmwContext cmwContext, I oldEntity,
+    private List<TransformationPipeline<I, ? extends O>> applyTransformations(
+            List<TransformationPipeline<I, ? extends O>> pipelines, CmwContext cmwContext, I oldEntity,
             I newEntity, UpdateInfo updateInfo) {
-        List<TransformationPipeline<I, ? extends CoreEntity>> successfulPipelines = new ArrayList<>();
+        List<TransformationPipeline<I, ? extends O>> successfulPipelines = new ArrayList<>();
 
-        for (TransformationPipeline<I, ? extends CoreEntity> pipeline : pipelines) {
+        for (TransformationPipeline<I, ? extends O> pipeline : pipelines) {
             try {
                 pipeline.runTransformation(cmwContext, updateInfo, oldEntity, newEntity);
                 cmwContext.logInfo(updateInfo, "Transformed by output channel " + pipeline.getName());
@@ -208,13 +180,13 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
                     );
                 } else {
                     JsonValidationErrorMetric errorMetric = new JsonValidationErrorMetric(
-                            cmwContext.getLayer() + pipeline.getTransformedEntity().getBareTableName(), 1.0
+                            cmwContext.getLayer() + pipeline.getTransformedEntity(), 1.0
                     );
                     cmwContext.putMetrics(errorMetric);
 
                     cmwContext.logWarning(
                             updateInfo,
-                            "JSON validation failed for " + pipeline.getTransformedEntity().getBareTableName()
+                            "JSON validation failed for " + pipeline.getTransformedEntity()
                                     + " with message:\n" + pipeline.getValidationError()
                     );
                 }
@@ -241,9 +213,9 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
         return successfulPipelines;
     }
 
-    private void saveOutput(List<TransformationPipeline<I, ? extends CoreEntity>> pipelines, CmwContext cmwContext,
+    private void saveOutput(List<TransformationPipeline<I, ? extends O>> pipelines, CmwContext cmwContext,
                             I oldEntity, I newEntity, UpdateInfo updateInfo) {
-        for (TransformationPipeline<I, ? extends CoreEntity> pipeline : pipelines) {
+        for (TransformationPipeline<I, ? extends O> pipeline : pipelines) {
             try {
                 if (pipeline.isValid()) {
                     boolean saveSuccessful = pipeline.save(cmwContext, updateInfo, newEntity);
@@ -251,7 +223,7 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
                     if (saveSuccessful) {
                         cmwContext.logInfo(
                                 updateInfo,
-                                "Updated " + pipeline.getTransformedEntity().getBareTableName() + " in database"
+                                "Updated " + pipeline.getTransformedEntity() + " in database"
                         );
                     }
                 }
@@ -274,7 +246,7 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
         }
     }
 
-    private void handleRetry(List<TransformationPipeline<I, ? extends CoreEntity>> pipelines, CmwContext cmwContext,
+    private void handleRetry(List<TransformationPipeline<I, ? extends O>> pipelines, CmwContext cmwContext,
                              UpdateInfo updateInfo, I oldEntity, I newEntity, InsufficientDataException e) {
         if (retryPolicy != null) {
             cmwContext.logWarning(updateInfo, "Retrying object (cause: " + e.getMessage() + ")");
@@ -297,10 +269,10 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
         }
     }
 
-    private void handleRetryFailed(List<TransformationPipeline<I, ? extends CoreEntity>> pipelines,
+    private void handleRetryFailed(List<TransformationPipeline<I, ? extends O>> pipelines,
                                    CmwContext cmwContext, UpdateInfo updateInfo, I oldEntity, I newEntity,
                                    String message) {
-        for (TransformationPipeline<I, ? extends CoreEntity> pipeline : pipelines) {
+        for (TransformationPipeline<I, ? extends O> pipeline : pipelines) {
             if (pipeline.isApplicable(cmwContext, updateInfo, oldEntity, newEntity)) {
                 pipeline.onTransformerFailure(cmwContext, updateInfo, oldEntity, newEntity, message);
             }
@@ -313,7 +285,7 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
         }
     }
 
-    private void handleValidationFailure(List<TransformationPipeline<I, ? extends CoreEntity>> pipelines,
+    private void handleValidationFailure(List<TransformationPipeline<I, ? extends O>> pipelines,
                                          CmwContext cmwContext, I newEntity, UpdateInfo updateInfo) {
         cmwContext.logWarning(updateInfo, "Not all transformed output was valid");
 
@@ -324,35 +296,35 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
         }
     }
 
-    private List<TransformationPipeline<I, ? extends CoreEntity>> createTransformationPipelines() {
-        List<TransformationPipeline<I, ? extends CoreEntity>> result = new ArrayList<>();
+    private List<TransformationPipeline<I, ? extends O>> createTransformationPipelines() {
+        List<TransformationPipeline<I, ? extends O>> result = new ArrayList<>();
 
-        for (TransformationTriggerOutputChannel<I, ? extends CoreEntity> outputChannel : outputChannels) {
+        for (TransformationTriggerOutputChannel<I, ? extends O> outputChannel : outputChannels) {
             result.add(createTransformationPipeline(outputChannel));
         }
 
         return result;
     }
 
-    private <O extends CoreEntity> TransformationPipeline<I, O> createTransformationPipeline(
+    private <O> TransformationPipeline<I, O> createTransformationPipeline(
             TransformationTriggerOutputChannel<I, O> outputChannel) {
-        return new TransformationPipeline<>(outputChannel, validator);
+        return new TransformationPipeline<>(outputChannel);
     }
 
-    private boolean isTransformationSuccessful(List<TransformationPipeline<I, ? extends CoreEntity>> pipelines,
-                                               List<TransformationPipeline<I, ? extends CoreEntity>> successfulPipelines
+    private boolean isTransformationSuccessful(List<TransformationPipeline<I, ? extends O>> pipelines,
+                                               List<TransformationPipeline<I, ? extends O>> successfulPipelines
     ) {
         return pipelines.size() == successfulPipelines.size();
     }
 
-    private boolean isValid(List<TransformationPipeline<I, ? extends CoreEntity>> pipelines) {
+    private boolean isValid(List<TransformationPipeline<I, ? extends O>> pipelines) {
         return pipelines.size() == countValidPipelines(pipelines);
     }
 
-    private int countValidPipelines(List<TransformationPipeline<I, ? extends CoreEntity>> pipelines) {
+    private int countValidPipelines(List<TransformationPipeline<I, ? extends O>> pipelines) {
         int count = 0;
 
-        for (TransformationPipeline<I, ? extends CoreEntity> pipeline : pipelines) {
+        for (TransformationPipeline<I, ? extends O> pipeline : pipelines) {
             if (pipeline.isValid()) {
                 count++;
             }
@@ -362,13 +334,13 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
     }
 
     private List<String> gatherPipelineValidationErrors(
-            List<TransformationPipeline<I, ? extends CoreEntity>> pipelines) {
+            List<TransformationPipeline<I, ? extends O>> pipelines) {
         List<String> validationErrors = new ArrayList<>();
 
-        for (TransformationPipeline<I, ? extends CoreEntity> pipeline : pipelines) {
+        for (TransformationPipeline<I, ? extends O> pipeline : pipelines) {
             if (!pipeline.isValid()) {
                 validationErrors.add(
-                        "JSON validation failed for " + pipeline.getTransformedEntity().getBareTableName()
+                        "JSON validation failed for " + pipeline.getTransformedEntity()
                                 + " with message:\n" + pipeline.getValidationError()
                 );
             }
@@ -377,9 +349,7 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
         return validationErrors;
     }
 
-    private UpdateInfo createUpdateInfo(I entity) {
-        return new UpdateInfo(entity.getContext(), entity.getObjectId(), entity.getUpdateId());
-    }
+    public abstract UpdateInfo createUpdateInfo(I entity);
 
     private boolean handleError(CmwContext cmwContext, UpdateInfo updateInfo, I oldEntity, I newEntity, Exception e) {
         boolean isHandled = false;
@@ -399,7 +369,7 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
      *
      * @param genericFilter The filter that needs to be added.
      */
-    public void addGenericFilter(TransformationTriggerFilter<CoreEntity> genericFilter) {
+    public void addGenericFilter(TransformationTriggerFilter<I> genericFilter) {
         genericFilters.add(genericFilter);
     }
 
@@ -420,7 +390,7 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
      *
      * @param outputChannel The output channel that needs to be added.
      */
-    public void addOutputChannel(TransformationTriggerOutputChannel<I, ? extends CoreEntity> outputChannel) {
+    public void addOutputChannel(TransformationTriggerOutputChannel<I, ? extends O> outputChannel) {
         outputChannels.add(outputChannel);
     }
 
@@ -460,7 +430,7 @@ public class TransformationTrigger<I extends CoreEntity> implements EntityTrigge
      *
      * @param retryPolicy The retry policy that needs to be added.
      */
-    public void setRetryPolicy(TransformationTriggerRetryPolicy<I> retryPolicy) {
+    public void setRetryPolicy(TransformationTriggerRetryPolicy<CoreEntity> retryPolicy) {
         this.retryPolicy = retryPolicy;
     }
 }

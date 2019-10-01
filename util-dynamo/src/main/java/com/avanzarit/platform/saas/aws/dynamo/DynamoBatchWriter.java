@@ -26,11 +26,11 @@ import java.util.Set;
  * The DynamoBatchWriter can be used for easily writing entities to DynamoDb in batch. It transparently handles the
  * limitations inherent to DynamoDb batch requests.
  */
-public class DynamoBatchWriter {
+public class DynamoBatchWriter<I> {
 
     private static final int MAX_DYNAMO_BATCH_SIZE = 25;
 
-    private Map<String, Set<DynamoEntity>> batch = new HashMap<>();
+    private Map<String, Set<I>> batch = new HashMap<>();
     private int currentNumberOfItems = 0;
     private ObjectMapper mapper = new ObjectMapper();
     private DynamoDB dynamo;
@@ -52,7 +52,7 @@ public class DynamoBatchWriter {
      * a flush of the batch happens. Flushes happen either through manual invocation or if the
      * amount of items in the batch exceeds a maximum batch size of {@value MAX_DYNAMO_BATCH_SIZE}.
      */
-    public void writeItem(CmwContext cmwContext, String tableName, DynamoEntity entity) {
+    public void writeItem(CmwContext cmwContext, String tableName, I entity) {
         write(cmwContext, tableName, entity);
     }
 
@@ -62,8 +62,8 @@ public class DynamoBatchWriter {
      * amount of items in the batch exceeds a maximum batch size of {@value MAX_DYNAMO_BATCH_SIZE}.
      */
     public void writeItems(CmwContext cmwContext, String tableName,
-                           Collection<? extends DynamoEntity> entities) {
-        for (DynamoEntity entity : entities) {
+                           Collection<? extends I> entities) {
+        for (I entity : entities) {
             write(cmwContext, tableName, entity);
         }
     }
@@ -74,7 +74,7 @@ public class DynamoBatchWriter {
     public void flush(CmwContext cmwContext) {
         if (currentNumberOfItems > 0) {
             List<TableWriteItems> writeItems = new ArrayList<>();
-            for (Entry<String, Set<DynamoEntity>> entry : batch.entrySet()) {
+            for (Entry<String, Set<I>> entry : batch.entrySet()) {
                 TableWriteItems items = new TableWriteItems(entry.getKey())
                         .withItemsToPut(createItems(entry.getValue()));
 
@@ -156,7 +156,7 @@ public class DynamoBatchWriter {
         currentNumberOfItems = 0;
     }
 
-    private void write(CmwContext cmwContext, String tableName, DynamoEntity item) {
+    private void write(CmwContext cmwContext, String tableName, I item) {
         if (currentNumberOfItems == MAX_DYNAMO_BATCH_SIZE) {
             flush(cmwContext);
         }
@@ -164,7 +164,7 @@ public class DynamoBatchWriter {
         addItemToBatch(tableName, item);
     }
 
-    private void addItemToBatch(String fullTableName, DynamoEntity item) {
+    private void addItemToBatch(String fullTableName, I item) {
         if (!batch.containsKey(fullTableName)) {
             batch.put(fullTableName, new HashSet<>());
         }
@@ -180,10 +180,10 @@ public class DynamoBatchWriter {
         currentNumberOfItems++;
     }
 
-    private List<Item> createItems(Collection<DynamoEntity> entities) {
+    private List<Item> createItems(Collection<I> entities) {
         try {
             List<Item> result = new ArrayList<>();
-            for (DynamoEntity entity : entities) {
+            for (I entity : entities) {
                 result.add(Item.fromJSON(mapper.writeValueAsString(entity)));
             }
             return result;

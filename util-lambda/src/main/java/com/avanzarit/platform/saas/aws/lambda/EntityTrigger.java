@@ -1,14 +1,12 @@
 package com.avanzarit.platform.saas.aws.lambda;
 
-import com.avanzarit.platform.saas.aws.dynamo.DynamoEntity;
-import com.avanzarit.platform.saas.aws.lambda.processors.DynamoRecordProcessor;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 
 /**
- * An EntityTrigger is used by the {@link DynamoRecordProcessor} in order to handle events on entities within the
+ * An EntityTrigger is used by the Entity Processor in order to handle events on entities (dynamodb, s3 etc) within the
  * system.
  */
-public interface EntityTrigger<T extends DynamoEntity> {
+public interface EntityTrigger<T> {
 
     /**
      * Gets the entity class this trigger is associated with.

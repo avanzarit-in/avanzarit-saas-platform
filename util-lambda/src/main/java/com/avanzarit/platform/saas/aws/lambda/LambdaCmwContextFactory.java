@@ -2,6 +2,7 @@ package com.avanzarit.platform.saas.aws.lambda;
 
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.lambda.runtime.Context;
+import com.avanzarit.platform.saas.aws.lambda.model.StructuredLambdaName;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 
 /**

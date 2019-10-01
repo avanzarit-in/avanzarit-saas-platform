@@ -2,10 +2,10 @@ package com.avanzarit.platform.saas.aws.service.changelist;
 
 import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
 import com.avanzarit.platform.saas.aws.core.model.DataEntity;
-import com.avanzarit.platform.saas.aws.util.CmwContext;
-import com.avanzarit.platform.saas.aws.util.DateTimeUtils;
 import com.avanzarit.platform.saas.aws.dynamo.DynamoUtils;
 import com.avanzarit.platform.saas.aws.dynamo.StructuredTableNameParser;
+import com.avanzarit.platform.saas.aws.util.CmwContext;
+import com.avanzarit.platform.saas.aws.util.DateTimeUtils;
 
 import java.util.Date;
 import java.util.List;

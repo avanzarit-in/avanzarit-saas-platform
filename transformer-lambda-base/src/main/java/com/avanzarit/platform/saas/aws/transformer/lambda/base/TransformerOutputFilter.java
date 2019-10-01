@@ -1,6 +1,5 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
-import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import com.avanzarit.platform.saas.aws.util.UpdateInfo;
 
@@ -10,7 +9,7 @@ import com.avanzarit.platform.saas.aws.util.UpdateInfo;
  * @param <I> The type of input entities that this filter supports.
  * @param <O> The type of output entities that this filter supports.
  */
-public interface TransformerOutputFilter<I extends CoreEntity, O extends CoreEntity> {
+public interface TransformerOutputFilter<I, O> {
     /**
      * Determines whether the given output entity should be filtered out.
      *

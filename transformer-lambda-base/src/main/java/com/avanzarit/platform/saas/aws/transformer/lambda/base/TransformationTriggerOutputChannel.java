@@ -1,57 +1,40 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
-import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
+import com.avanzarit.platform.saas.aws.core.validation.Validator;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import com.avanzarit.platform.saas.aws.util.UpdateInfo;
-import com.avanzarit.platform.saas.aws.dynamo.DynamoDbRepository;
-import com.avanzarit.platform.saas.aws.dynamo.StructuredTableNameParser;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a potential output channel for input that enters a {@link TransformationTrigger}. Every output channel
- * defines its own transformation and filtering logic.
+ * Represents a potential output channel for input that enters a {@link TransformationTrigger}.
+ * Every output channel defines its own transformation and filtering logic.
  *
  * @param <I> The type of input entities that the output channel processes.
  * @param <O> The type of output entities that the output channel generates.
  */
-public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends CoreEntity> {
+public abstract class TransformationTriggerOutputChannel<I, O> {
     private String name;
+    private Validator validator;
     private boolean supportsMultipleOutputEntities;
-    private List<TransformerInputFilter<CoreEntity>> genericPreTransformFilters;
+    private List<TransformerInputFilter<I>> genericPreTransformFilters;
     private List<TransformerInputFilter<I>> preTransformFilters;
     private Transformer<I, O> transformer;
-    private List<TransformerOutputFilter<CoreEntity, CoreEntity>> genericPostTransformFilters;
+    private List<TransformerOutputFilter<I, O>> genericPostTransformFilters;
     private List<TransformerOutputFilter<I, O>> postTransformFilters;
-    private StructuredTableNameParser tableNameParser;
-    private DynamoDbRepository<O> outputRepository;
-    private KinesisStreamOutputWriter<O> kinesisStreamOutputWriter;
-    private List<TransformerOutputSavedListener<CoreEntity, CoreEntity>> genericOutputSavedListeners;
+    private List<TransformerOutputSavedListener<I, O>> genericOutputSavedListeners;
     private List<TransformerOutputSavedListener<I, O>> outputSavedListeners;
     private List<TransformerPreTransformationListener<I>> preTransformationListeners;
-    private List<TransformerValidationFailureListener<CoreEntity>> validationFailureListeners;
-    private List<TransformerFailureListener<CoreEntity>> genericFailureListeners;
+    private List<TransformerValidationFailureListener<O>> validationFailureListeners;
+    private List<TransformerFailureListener<I>> genericFailureListeners;
     private List<TransformerFailureListener<I>> failureListeners;
-    private List<TransformerExceptionListener<CoreEntity>> genericExceptionListeners;
+    private List<TransformerExceptionListener<I>> genericExceptionListeners;
     private List<TransformerExceptionListener<I>> exceptionListeners;
 
-    public TransformationTriggerOutputChannel(String name, Transformer<I, O> transformer,
-                                              StructuredTableNameParser tableNameParser,
-                                              DynamoDbRepository<O> outputRepository) {
-        this(name, transformer);
-        this.tableNameParser = tableNameParser;
-        this.outputRepository = outputRepository;
-    }
-
-    public TransformationTriggerOutputChannel(String name, Transformer<I, O> transformer,
-                                              KinesisStreamOutputWriter<O> kinesisStreamOutputWriter) {
-        this(name, transformer);
-        this.kinesisStreamOutputWriter = kinesisStreamOutputWriter;
-    }
-
-    private TransformationTriggerOutputChannel(String name, Transformer<I, O> transformer) {
+    public TransformationTriggerOutputChannel(String name, Validator validator, Transformer<I, O> transformer) {
         this.name = name;
+        this.validator = validator;
         this.transformer = transformer;
         this.genericPreTransformFilters = new ArrayList<>();
         this.preTransformFilters = new ArrayList<>();
@@ -73,6 +56,10 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
      */
     public String getName() {
         return name;
+    }
+
+    public Validator getValidator() {
+        return validator;
     }
 
     public boolean getSupportsMultipleOutputEntities() {
@@ -167,7 +154,7 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
      * @param message           A message indicating why validation failed.
      */
     public void onValidationFailure(CmwContext cmwContext, UpdateInfo updateInfo, O transformedEntity, String message) {
-        for (TransformerValidationFailureListener<CoreEntity> failureListener : validationFailureListeners) {
+        for (TransformerValidationFailureListener<O> failureListener : validationFailureListeners) {
             failureListener.onValidationFailure(cmwContext, updateInfo, transformedEntity, message);
         }
     }
@@ -184,7 +171,7 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
      */
     public void onTransformationFailure(CmwContext cmwContext, UpdateInfo updateInfo, I inputOldEntity,
                                         I inputNewEntity, String message) {
-        for (TransformerFailureListener<CoreEntity> genericFailureListener : genericFailureListeners) {
+        for (TransformerFailureListener<I> genericFailureListener : genericFailureListeners) {
             genericFailureListener.onFailure(cmwContext, updateInfo, inputOldEntity, inputNewEntity, message);
         }
 
@@ -203,7 +190,7 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
      */
     public boolean handleException(CmwContext cmwContext, UpdateInfo updateInfo, I inputEntity, Exception e) {
         boolean result = false;
-        for (TransformerExceptionListener<CoreEntity> genericExceptionListener : genericExceptionListeners) {
+        for (TransformerExceptionListener<I> genericExceptionListener : genericExceptionListeners) {
             if (genericExceptionListener.handleException(cmwContext, updateInfo, inputEntity, e)) {
                 result = true;
             }
@@ -230,7 +217,7 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
             }
         }
 
-        for (TransformerInputFilter<CoreEntity> genericPreTransformFilter : genericPreTransformFilters) {
+        for (TransformerInputFilter<I> genericPreTransformFilter : genericPreTransformFilters) {
             if (genericPreTransformFilter.filteredOut(cmwContext, updateInfo, oldEntity, newEntity)) {
                 cmwContext.logInfo(
                         updateInfo,
@@ -246,7 +233,7 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
 
     private boolean filteredOutByPostFilters(CmwContext cmwContext, UpdateInfo updateInfo, I newEntity,
                                              O outputEntity) {
-        for (TransformerOutputFilter<CoreEntity, CoreEntity> genericPostTransformFilter : genericPostTransformFilters) {
+        for (TransformerOutputFilter<I, O> genericPostTransformFilter : genericPostTransformFilters) {
             if (genericPostTransformFilter.filteredOut(cmwContext, updateInfo, newEntity, outputEntity)) {
                 cmwContext.logInfo(
                         updateInfo,
@@ -271,26 +258,7 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
         return false;
     }
 
-    private void saveOutputEntity(CmwContext cmwContext, UpdateInfo updateInfo, O outputEntity) {
-        if (outputRepository != null) {
-            String tableName = tableNameParser.createTableName(
-                    cmwContext.getPrefix(), cmwContext.getLayer(), outputEntity.getBareTableName()
-            );
-
-            if (outputRepository.isBatchWriterAvailable()) {
-                outputRepository.putInBatch(cmwContext, tableName, outputEntity);
-            } else {
-                outputRepository.put(tableName, outputEntity);
-            }
-            cmwContext.logInfo(updateInfo, "Stored " + outputEntity.getBareTableName() + " in " + tableName);
-        }
-
-        if (kinesisStreamOutputWriter != null) {
-            kinesisStreamOutputWriter.process(outputEntity);
-            cmwContext.logInfo(updateInfo, "Stored " + outputEntity.getBareTableName()
-                    + " in " + kinesisStreamOutputWriter.getStreamName());
-        }
-    }
+    public abstract void saveOutputEntity(CmwContext cmwContext, UpdateInfo updateInfo, O outputEntity);
 
     private void notifyPreTransformationListeners(CmwContext cmwContext, UpdateInfo updateInfo, I oldEntity,
                                                   I newEntity) {
@@ -301,7 +269,7 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
 
     private void notifyOutputSavedListeners(CmwContext cmwContext, UpdateInfo updateInfo, I inputEntity,
                                             O outputEntity) {
-        for (TransformerOutputSavedListener<CoreEntity, CoreEntity> listener : genericOutputSavedListeners) {
+        for (TransformerOutputSavedListener<I, O> listener : genericOutputSavedListeners) {
             listener.onOutputSaved(cmwContext, updateInfo, inputEntity, outputEntity);
         }
 
@@ -313,7 +281,7 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
     /**
      * Adds a non-type-specific {@link TransformerInputFilter} to this output channel.
      */
-    public void addGenericPreTransformFilter(TransformerInputFilter<CoreEntity> genericPreTransformFilter) {
+    public void addGenericPreTransformFilter(TransformerInputFilter<I> genericPreTransformFilter) {
         genericPreTransformFilters.add(genericPreTransformFilter);
     }
 
@@ -327,7 +295,7 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
     /**
      * Adds a non-type-specific {@link TransformerOutputFilter} to this output channel.
      */
-    public void addGenericPostTransformFilter(TransformerOutputFilter<CoreEntity, CoreEntity> outputFilter) {
+    public void addGenericPostTransformFilter(TransformerOutputFilter<I, O> outputFilter) {
         genericPostTransformFilters.add(outputFilter);
     }
 
@@ -341,7 +309,7 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
     /**
      * Adds a non-type-specific {@link TransformerOutputSavedListener} to this output channel.
      */
-    public void addGenericOutputSavedListener(TransformerOutputSavedListener<CoreEntity, CoreEntity> listener) {
+    public void addGenericOutputSavedListener(TransformerOutputSavedListener<I, O> listener) {
         genericOutputSavedListeners.add(listener);
     }
 
@@ -362,14 +330,14 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
     /**
      * Adds a {@link TransformerValidationFailureListener} to this output channel.
      */
-    public void addValidationFailureListener(TransformerValidationFailureListener<CoreEntity> failureListener) {
+    public void addValidationFailureListener(TransformerValidationFailureListener<O> failureListener) {
         validationFailureListeners.add(failureListener);
     }
 
     /**
      * Adds a non-type-specific {@link TransformerFailureListener} to this output channel.
      */
-    public void addGenericFailureListener(TransformerFailureListener<CoreEntity> genericFailureListener) {
+    public void addGenericFailureListener(TransformerFailureListener<I> genericFailureListener) {
         genericFailureListeners.add(genericFailureListener);
     }
 
@@ -383,7 +351,7 @@ public class TransformationTriggerOutputChannel<I extends CoreEntity, O extends 
     /**
      * Adds a non-type-specific {@link TransformerExceptionListener} to this output channel.
      */
-    public void addGenericExceptionListener(TransformerExceptionListener<CoreEntity> genericExceptionListener) {
+    public void addGenericExceptionListener(TransformerExceptionListener<I> genericExceptionListener) {
         genericExceptionListeners.add(genericExceptionListener);
     }
 

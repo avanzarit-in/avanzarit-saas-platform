@@ -1,6 +1,5 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base.outputsavedlistener;
 
-import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
 import com.avanzarit.platform.saas.aws.service.lateststate.States;
 import com.avanzarit.platform.saas.aws.service.lateststate.UpdateLatestStateService;
 import com.avanzarit.platform.saas.aws.transformer.lambda.base.TransformerOutputSavedListener;
@@ -10,7 +9,7 @@ import com.avanzarit.platform.saas.aws.util.UpdateInfo;
 /**
  * Updates the latest product state to CONFIRMATION when a product entity was successfully saved.
  */
-public class LatestStateOutputSavedListener implements TransformerOutputSavedListener<CoreEntity, CoreEntity> {
+public class LatestStateOutputSavedListener<I, O> implements TransformerOutputSavedListener<I, O> {
 
     private UpdateLatestStateService latestStateService;
 
@@ -19,8 +18,8 @@ public class LatestStateOutputSavedListener implements TransformerOutputSavedLis
     }
 
     @Override
-    public void onOutputSaved(CmwContext cmwContext, UpdateInfo updateInfo, CoreEntity inputEntity,
-                              CoreEntity outputEntity) {
+    public void onOutputSaved(CmwContext cmwContext, UpdateInfo updateInfo, I inputEntity,
+                              O outputEntity) {
         latestStateService.updateState(cmwContext, updateInfo, States.CONFIRMATION);
     }
 }

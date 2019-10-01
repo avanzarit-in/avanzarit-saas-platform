@@ -1,6 +1,5 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
-import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import com.avanzarit.platform.saas.aws.util.UpdateInfo;
 
@@ -12,7 +11,7 @@ import java.util.List;
  * @param <I> The type of the input entity.
  * @param <O> The type of the output entity.
  */
-public interface Transformer<I extends CoreEntity, O extends CoreEntity> {
+public interface Transformer<I, O> {
     /**
      * Transforms the given input entity to the required output representation.
      *

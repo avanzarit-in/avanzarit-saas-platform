@@ -1,8 +1,14 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
-import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
+import com.avanzarit.platform.saas.aws.core.validation.Validator;
 import com.avanzarit.platform.saas.aws.dynamo.DynamoDbRepository;
 import com.avanzarit.platform.saas.aws.dynamo.StructuredTableNameParser;
+import com.avanzarit.platform.saas.aws.s3.StructuredS3BucketNameParser;
+import com.avanzarit.platform.saas.aws.transformer.lambda.base.outputchannel.DynamoDbTransformationTriggerOutputChannel;
+import com.avanzarit.platform.saas.aws.transformer.lambda.base.outputchannel.KinesisStreamTransformationTriggerOutputChannel;
+import com.avanzarit.platform.saas.aws.transformer.lambda.base.outputchannel.S3TransformationTriggerOutputChannel;
+import com.avanzarit.platform.saas.aws.transformer.lambda.base.writers.KinesisStreamOutputWriter;
+import com.avanzarit.platform.saas.aws.transformer.lambda.base.writers.S3OutputWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,24 +20,27 @@ import java.util.List;
  * @param <I> The type of input entity that the output channel will process.
  * @param <O> The type of output entity that the output channel will generate.
  */
-public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O extends CoreEntity> {
+public class TransformationTriggerOutputChannelBuilder<I, O> {
     private String name;
-    private boolean supportsMultipleOutputEntities;
-    private List<TransformerInputFilter<CoreEntity>> genericPreTransformFilters;
-    private List<TransformerInputFilter<I>> preTransformFilters;
+    private Validator validator;
     private Transformer<I, O> transformer;
-    private List<TransformerOutputFilter<CoreEntity, CoreEntity>> genericPostTransformFilters;
+    private boolean supportsMultipleOutputEntities;
+    private List<TransformerInputFilter<I>> genericPreTransformFilters;
+    private List<TransformerInputFilter<I>> preTransformFilters;
+    private List<TransformerOutputFilter<I, O>> genericPostTransformFilters;
     private List<TransformerOutputFilter<I, O>> postTransformFilters;
     private StructuredTableNameParser tableNameParser;
     private DynamoDbRepository<O> outputRepository;
     private KinesisStreamOutputWriter<O> kinesisStreamOutputWriter;
-    private List<TransformerOutputSavedListener<CoreEntity, CoreEntity>> genericOutputSavedListeners;
+    private S3OutputWriter<O> s3OutputWriter;
+    private StructuredS3BucketNameParser s3BucketNameParser;
+    private List<TransformerOutputSavedListener<I, O>> genericOutputSavedListeners;
     private List<TransformerOutputSavedListener<I, O>> outputSavedListeners;
     private List<TransformerPreTransformationListener<I>> preTransformationListeners;
-    private List<TransformerValidationFailureListener<CoreEntity>> validationFailureListeners;
-    private List<TransformerFailureListener<CoreEntity>> genericFailureListeners;
+    private List<TransformerValidationFailureListener<O>> validationFailureListeners;
+    private List<TransformerFailureListener<I>> genericFailureListeners;
     private List<TransformerFailureListener<I>> failureListeners;
-    private List<TransformerExceptionListener<CoreEntity>> genericExceptionListeners;
+    private List<TransformerExceptionListener<I>> genericExceptionListeners;
     private List<TransformerExceptionListener<I>> exceptionListeners;
 
     public TransformationTriggerOutputChannelBuilder() {
@@ -49,6 +58,18 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
         this.exceptionListeners = new ArrayList<>();
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public Validator getValidator() {
+        return validator;
+    }
+
+    public Transformer<I, O> getTransformer() {
+        return transformer;
+    }
+
     /**
      * Provides the name of the output channel. This name is used mostly in the system logging.
      *
@@ -56,6 +77,11 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
      */
     public TransformationTriggerOutputChannelBuilder<I, O> withName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public TransformationTriggerOutputChannelBuilder<I, O> withValidator(Validator validator) {
+        this.validator = validator;
         return this;
     }
 
@@ -77,7 +103,7 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
      * @param filter The transformer filter to add to the output channel.
      */
     public TransformationTriggerOutputChannelBuilder<I, O> withGenericPreTransformFilter(
-            TransformerInputFilter<CoreEntity> filter) {
+            TransformerInputFilter<I> filter) {
         this.genericPreTransformFilters.add(filter);
         return this;
     }
@@ -111,7 +137,7 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
      * @param filter The transformer filter to add to the output channel.
      */
     public TransformationTriggerOutputChannelBuilder<I, O> withGenericPostTransformFilter(
-            TransformerOutputFilter<CoreEntity, CoreEntity> filter) {
+            TransformerOutputFilter<I, O> filter) {
         this.genericPostTransformFilters.add(filter);
         return this;
     }
@@ -138,6 +164,12 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
         return this;
     }
 
+    public TransformationTriggerOutputChannelBuilder<I, O> withS3BucketParser(
+            StructuredS3BucketNameParser s3BucketParser) {
+        this.s3BucketNameParser = s3BucketParser;
+        return this;
+    }
+
     /**
      * The {@link DynamoDbRepository} class to use for storing the output entity.
      */
@@ -157,13 +189,22 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
     }
 
     /**
+     * The {@link KinesisStreamOutputWriter} class to use for storing the output entity.
+     */
+    public TransformationTriggerOutputChannelBuilder<I, O> withOutputS3Writer(
+            S3OutputWriter<O> s3Writer) {
+        this.s3OutputWriter = s3Writer;
+        return this;
+    }
+
+    /**
      * Adds a {@link TransformerOutputSavedListener} that is not entity-type-specific (or generic) to the output
      * channel. This listener is invoked after the output has been saved.
      *
      * @param outputSavedListener The listener to add to the output channel.
      */
     public TransformationTriggerOutputChannelBuilder<I, O> withGenericOutputSavedListener(
-            TransformerOutputSavedListener<CoreEntity, CoreEntity> outputSavedListener) {
+            TransformerOutputSavedListener<I, O> outputSavedListener) {
         this.genericOutputSavedListeners.add(outputSavedListener);
         return this;
     }
@@ -199,7 +240,7 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
      * @param validationFailureListener The validation listener to add to the output channeL.
      */
     public TransformationTriggerOutputChannelBuilder<I, O> withValidationFailureListener(
-            TransformerValidationFailureListener<CoreEntity> validationFailureListener) {
+            TransformerValidationFailureListener<O> validationFailureListener) {
         this.validationFailureListeners.add(validationFailureListener);
         return this;
     }
@@ -211,7 +252,7 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
      * @param genericFailureListener The failure listener to add to the output channel.
      */
     public TransformationTriggerOutputChannelBuilder<I, O> withGenericFailureListener(
-            TransformerFailureListener<CoreEntity> genericFailureListener) {
+            TransformerFailureListener<I> genericFailureListener) {
         this.genericFailureListeners.add(genericFailureListener);
         return this;
     }
@@ -235,7 +276,7 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
      * @param genericExceptionListener The exception listener to add to the output channel.
      */
     public TransformationTriggerOutputChannelBuilder<I, O> withGenericExceptionListener(
-            TransformerExceptionListener<CoreEntity> genericExceptionListener) {
+            TransformerExceptionListener<I> genericExceptionListener) {
         this.genericExceptionListeners.add(genericExceptionListener);
         return this;
     }
@@ -270,27 +311,35 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
             throw new TransformationTriggerBuildingFailedException("No table name parser was specified");
         }
 
-        if (outputRepository == null && kinesisStreamOutputWriter == null) {
+        if (s3BucketNameParser == null && s3OutputWriter != null) {
+            throw new TransformationTriggerBuildingFailedException("No s3 bucket name parser was specified");
+        }
+
+        if (s3OutputWriter == null && outputRepository == null && kinesisStreamOutputWriter == null) {
             throw new TransformationTriggerBuildingFailedException(
-                    "No output DynamoDB Repository or Kinesis Stream Writer was specified"
+                    "No output DynamoDB Repository or S3 bucket or Kinesis Stream Writer was specified"
             );
         }
 
         TransformationTriggerOutputChannel<I, O> outputChannel = null;
 
         if (outputRepository != null) {
-            outputChannel = new TransformationTriggerOutputChannel<>(name, transformer, tableNameParser, outputRepository);
+            outputChannel = new DynamoDbTransformationTriggerOutputChannel<>(name, transformer, validator, tableNameParser, outputRepository);
         }
 
         if (kinesisStreamOutputWriter != null) {
-            outputChannel = new TransformationTriggerOutputChannel<>(name, transformer, kinesisStreamOutputWriter);
+            outputChannel = new KinesisStreamTransformationTriggerOutputChannel<>(name, transformer, validator, kinesisStreamOutputWriter);
+        }
+
+        if (s3OutputWriter != null) {
+            outputChannel = new S3TransformationTriggerOutputChannel<>(name, transformer, validator, s3BucketNameParser, s3OutputWriter);
         }
 
         if (supportsMultipleOutputEntities) {
             outputChannel.setSupportsMultipleOutputEntities(supportsMultipleOutputEntities);
         }
 
-        for (TransformerInputFilter<CoreEntity> genericPreTransformFilter : genericPreTransformFilters) {
+        for (TransformerInputFilter<I> genericPreTransformFilter : genericPreTransformFilters) {
             outputChannel.addGenericPreTransformFilter(genericPreTransformFilter);
         }
 
@@ -298,7 +347,7 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
             outputChannel.addPreTransformFilter(preTransformFilter);
         }
 
-        for (TransformerOutputFilter<CoreEntity, CoreEntity> genericPostTransformFilter : genericPostTransformFilters) {
+        for (TransformerOutputFilter<I, O> genericPostTransformFilter : genericPostTransformFilters) {
             outputChannel.addGenericPostTransformFilter(genericPostTransformFilter);
         }
 
@@ -306,7 +355,7 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
             outputChannel.addPostTransformFilter(postTransformFilter);
         }
 
-        for (TransformerOutputSavedListener<CoreEntity, CoreEntity> listener : genericOutputSavedListeners) {
+        for (TransformerOutputSavedListener<I, O> listener : genericOutputSavedListeners) {
             outputChannel.addGenericOutputSavedListener(listener);
         }
 
@@ -318,11 +367,11 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
             outputChannel.addPreTransformationListener(preTransformationListener);
         }
 
-        for (TransformerValidationFailureListener<CoreEntity> validationFailureListener : validationFailureListeners) {
+        for (TransformerValidationFailureListener<O> validationFailureListener : validationFailureListeners) {
             outputChannel.addValidationFailureListener(validationFailureListener);
         }
 
-        for (TransformerFailureListener<CoreEntity> genericFailureListener : genericFailureListeners) {
+        for (TransformerFailureListener<I> genericFailureListener : genericFailureListeners) {
             outputChannel.addGenericFailureListener(genericFailureListener);
         }
 
@@ -330,7 +379,7 @@ public class TransformationTriggerOutputChannelBuilder<I extends CoreEntity, O e
             outputChannel.addFailureListener(failureListener);
         }
 
-        for (TransformerExceptionListener<CoreEntity> genericExceptionListener : genericExceptionListeners) {
+        for (TransformerExceptionListener<I> genericExceptionListener : genericExceptionListeners) {
             outputChannel.addGenericExceptionListener(genericExceptionListener);
         }
 

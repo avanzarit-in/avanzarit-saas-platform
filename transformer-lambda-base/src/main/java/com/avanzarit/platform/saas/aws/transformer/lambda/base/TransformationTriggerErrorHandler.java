@@ -1,6 +1,5 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
-import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import com.avanzarit.platform.saas.aws.util.UpdateInfo;
 
@@ -9,7 +8,7 @@ import com.avanzarit.platform.saas.aws.util.UpdateInfo;
  *
  * @param <I> The type of input entities that this error handler supports.
  */
-public interface TransformationTriggerErrorHandler<I extends CoreEntity> {
+public interface TransformationTriggerErrorHandler<I> {
     /**
      * Attempts to handle an exception.
      *

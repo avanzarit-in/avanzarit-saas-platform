@@ -18,5 +18,5 @@ public interface TransformationTriggerRetryPolicy<I extends CoreEntity> {
      * @param missingEntityList The input entity that were missing while transforming the coreEntity.
      * @param coreEntity     The input entity that was being transformed.
      */
-    boolean retry(CmwContext cmwContext, List<? extends CoreEntity> missingEntityList, CoreEntity coreEntity);
+    boolean retry(CmwContext cmwContext, List<? extends I> missingEntityList, I coreEntity);
 }

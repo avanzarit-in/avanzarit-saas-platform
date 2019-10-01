@@ -1,6 +1,5 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base.exceptionlistener;
 
-import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
 import com.avanzarit.platform.saas.aws.service.lateststate.States;
 import com.avanzarit.platform.saas.aws.service.lateststate.UpdateLatestStateService;
 import com.avanzarit.platform.saas.aws.transformer.lambda.base.EntityTransformationException;
@@ -14,7 +13,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  * was thrown, then the state is updated to WARNING. If any other exception is thrown, then the state is updated to
  * ERROR.
  */
-public class LatestStateExceptionListener implements TransformerExceptionListener<CoreEntity> {
+public class LatestStateExceptionListener<I> implements TransformerExceptionListener<I> {
 
     private UpdateLatestStateService latestStateService;
 
@@ -23,7 +22,7 @@ public class LatestStateExceptionListener implements TransformerExceptionListene
     }
 
     @Override
-    public boolean handleException(CmwContext cmwContext, UpdateInfo updateInfo, CoreEntity inputEntity, Exception e) {
+    public boolean handleException(CmwContext cmwContext, UpdateInfo updateInfo, I inputEntity, Exception e) {
         if (e instanceof EntityTransformationException) {
             cmwContext.logWarning(
                     updateInfo,

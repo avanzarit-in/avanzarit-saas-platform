@@ -24,7 +24,7 @@ public class DeltaDetectionService {
             return true;
         }
 
-        return detectsDelta(cmwContext, oldEntity.getEntityBody(), newEntity.getEntityBody(), newEntity.getTsunamiMetadata());
+        return detectsDeltaInternal(cmwContext, oldEntity.getEntityBody(), newEntity.getEntityBody(), newEntity.getTsunamiMetadata());
     }
 
     public boolean detectsDeltaIgnoringRetry(CmwContext cmwContext, Object oldObject, Object newObject, TsunamiMetadata tsunamiMetadata) {
@@ -32,10 +32,10 @@ public class DeltaDetectionService {
             return true;
         }
 
-        return detectsDelta(cmwContext, oldObject, newObject, tsunamiMetadata);
+        return detectsDeltaInternal(cmwContext, oldObject, newObject, tsunamiMetadata);
     }
 
-    private boolean detectsDelta(CmwContext cmwContext, Object oldObject, Object newObject, TsunamiMetadata tsunamiMetadata) {
+    private boolean detectsDeltaInternal(CmwContext cmwContext, Object oldObject, Object newObject, TsunamiMetadata tsunamiMetadata) {
         if (tsunamiDetectionService.isTsunamiDetected(cmwContext.getLayer(), tsunamiMetadata)) {
             return true;
         }
@@ -43,7 +43,7 @@ public class DeltaDetectionService {
         return objectChangeService.objectChanged(oldObject, newObject);
     }
 
-    public  boolean detectsDelta(Object oldObject, Object newObject) {
-       return objectChangeService.objectChanged(oldObject, newObject);
+    public boolean detectsDeltaBetweenObjects(Object oldObject, Object newObject) {
+        return objectChangeService.objectChanged(oldObject, newObject);
     }
 }

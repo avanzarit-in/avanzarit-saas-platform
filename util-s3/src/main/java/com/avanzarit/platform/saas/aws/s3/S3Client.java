@@ -17,12 +17,14 @@ import java.nio.charset.StandardCharsets;
 public class S3Client {
 
     private AmazonS3 client;
+    private S3Manager s3Manager;
 
     /**
      * Creates a new S3 client.
      */
     public S3Client() {
         client = S3Constants.S3_CLIENT;
+        s3Manager = new S3Manager(client);
     }
 
     /**

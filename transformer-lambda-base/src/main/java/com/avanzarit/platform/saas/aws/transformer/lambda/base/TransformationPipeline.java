@@ -1,10 +1,9 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
-import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
+import com.avanzarit.platform.saas.aws.core.validation.ValidationReport;
+import com.avanzarit.platform.saas.aws.core.validation.Validator;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import com.avanzarit.platform.saas.aws.util.UpdateInfo;
-import com.avanzarit.platform.saas.aws.validation.SchemaValidator;
-import com.avanzarit.platform.saas.aws.validation.ValidationReport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,16 +16,15 @@ import java.util.List;
  * @param <I> The type of input entity that this pipeline processes.
  * @param <O> The type of output entity that this pipeline generates.
  */
-public class TransformationPipeline<I extends CoreEntity, O extends CoreEntity> {
+public class TransformationPipeline<I, O> {
     private TransformationTriggerOutputChannel<I, O> outputChannel;
-    private SchemaValidator validator;
-    //private O transformedEntity;
     private List<O> transformedEntities;
+    private Validator validator;
     private String validationError;
 
-    public TransformationPipeline(TransformationTriggerOutputChannel<I, O> outputChannel, SchemaValidator validator) {
+    public TransformationPipeline(TransformationTriggerOutputChannel<I, O> outputChannel) {
         this.outputChannel = outputChannel;
-        this.validator = validator;
+        this.validator = outputChannel.getValidator();
         this.transformedEntities = new ArrayList<>();
     }
 
@@ -39,7 +37,7 @@ public class TransformationPipeline<I extends CoreEntity, O extends CoreEntity> 
 
     /**
      * Indicates whether the pipeline is applicable to the given input data (see
-     * {@link TransformationTriggerOutputChannel#isApplicable(CmwContext, UpdateInfo, CoreEntity, CoreEntity)}).
+     * {@link TransformationTriggerOutputChannel#isApplicable(CmwContext, UpdateInfo, I, O)}).
      *
      * @param updateInfo The identification information of the current update event.
      * @param oldEntity  The old version of the input entity.
@@ -64,7 +62,7 @@ public class TransformationPipeline<I extends CoreEntity, O extends CoreEntity> 
         } else {
             O transformedEntity = outputChannel.transform(cmwContext, updateInfo, oldEntity, newEntity);
             if (transformedEntity != null) {
-                transformedEntities.add(outputChannel.transform(cmwContext, updateInfo, oldEntity, newEntity));
+                transformedEntities.add(transformedEntity);
             }
         }
     }
@@ -90,8 +88,7 @@ public class TransformationPipeline<I extends CoreEntity, O extends CoreEntity> 
                     validationError = validationReport.getMessage();
                     outputChannel.onValidationFailure(
                             cmwContext, updateInfo, transformedEntity,
-                            "JSON validation failed for " + transformedEntity.getBareTableName()
-                                    + " with message:\n" + validationReport.getMessage()
+                            "JSON validation failed  with message:\n" + validationReport.getMessage()
                     );
                     return false;
                 }

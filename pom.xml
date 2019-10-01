@@ -16,10 +16,12 @@
         <module>util-s3</module>
         <module>util-lambda</module>
         <module>util-kinesis</module>
-     <module>transformer-lambda-base</module>
+        <module>transformer-lambda-base</module>
         <module>content-validation</module>
         <module>core-model</module>
         <module>core-services</module>
+        <module>digitalsignature-app</module>
+        <module>signature-lambda</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -285,6 +287,12 @@
             <dependency>
                 <groupId>com.avanzarit.platform.saas.aws</groupId>
                 <artifactId>core-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.avanzarit.platform.saas.aws</groupId>
+                <artifactId>util-s3</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

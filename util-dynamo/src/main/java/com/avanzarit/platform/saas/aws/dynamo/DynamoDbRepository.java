@@ -29,7 +29,7 @@ import java.util.List;
  * @param <T> An entity class of type {@link DynamoEntity} that will be used for persisting to and reading from
  *            DynamoDb.
  */
-public abstract class DynamoDbRepository<T extends DynamoEntity> {
+public abstract class DynamoDbRepository<T> {
 
     private static final Logger LOGGER = LogManager.getLogger(DynamoDbRepository.class);
 

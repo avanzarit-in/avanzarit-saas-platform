@@ -17,9 +17,6 @@ variable environment {
 
 }
 
-#set AWS_ACCESS_KEY_ID=AKIA4NSURK7W26KMRDHC
-#set AWS_SECRET_ACCESS_KEY=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
-#set AWS_DEFAULT_REGION=us-west-1
 
 provider "aws" {
   version = "~> 2.7"

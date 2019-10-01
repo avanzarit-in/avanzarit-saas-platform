@@ -1,6 +1,5 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
-import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import com.avanzarit.platform.saas.aws.util.UpdateInfo;
 
@@ -10,7 +9,7 @@ import com.avanzarit.platform.saas.aws.util.UpdateInfo;
  * @param <I> The type of input entities that this listener supports.
  * @param <O> The type of output entities that this listener supports.
  */
-public interface TransformerOutputSavedListener<I extends CoreEntity, O extends CoreEntity> {
+public interface TransformerOutputSavedListener<I, O> {
     /**
      * Notifies the listener that the output was saved and provides it with the relevant data.
      *

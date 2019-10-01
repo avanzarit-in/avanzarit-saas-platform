@@ -32,6 +32,10 @@
             <groupId>com.avanzarit.platform.saas.aws</groupId>
             <artifactId>util-kinesis</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.avanzarit.platform.saas.aws</groupId>
+            <artifactId>util-s3</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

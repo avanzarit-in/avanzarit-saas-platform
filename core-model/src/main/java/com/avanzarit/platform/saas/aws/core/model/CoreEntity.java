@@ -7,7 +7,6 @@ import com.avanzarit.platform.saas.aws.dynamo.DynamoEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 @DynamoDBTable(tableName = "")
 public abstract class CoreEntity implements DynamoEntity {
     public static final String COL_RETRY_UPDATE = "retry_update_id";

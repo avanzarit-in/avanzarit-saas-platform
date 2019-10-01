@@ -1,8 +1,8 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
-import com.avanzarit.platform.saas.aws.validation.SchemaValidator;
+import com.avanzarit.platform.saas.aws.core.validation.Validator;
+import com.avanzarit.platform.saas.aws.core.validation.impl.jsonschema.SchemaValidator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,20 +12,18 @@ import java.util.List;
  *
  * @param <I> The type of input entity that the transformation trigger will process.
  */
-public class TransformationTriggerBuilder<I extends CoreEntity> {
+public abstract class TransformationTriggerBuilder<I, O> {
 
     private Class<I> entityClass;
-    private SchemaValidator validator;
-    private ObjectMapper mapper;
-    private TransformationTriggerRetryPolicy<I> retryPolicy;
-    private List<TransformationTriggerFilter<CoreEntity>> genericFilters;
+    private Validator validator;
+    private TransformationTriggerRetryPolicy<CoreEntity> retryPolicy;
+    private List<TransformationTriggerFilter<I>> genericFilters;
     private List<TransformationTriggerFilter<I>> filters;
-    private List<TransformationTriggerOutputChannel<I, ? extends CoreEntity>> outputChannels;
+    private List<TransformationTriggerOutputChannel<I, ? extends O>> outputChannels;
     private List<TransformationTriggerValidationListener<I>> validationListeners;
     private List<TransformationTriggerErrorHandler<I>> errorHandlers;
 
-    public TransformationTriggerBuilder(ObjectMapper mapper) {
-        this.mapper = mapper;
+    public TransformationTriggerBuilder() {
         this.genericFilters = new ArrayList<>();
         this.filters = new ArrayList<>();
         this.outputChannels = new ArrayList<>();
@@ -33,10 +31,14 @@ public class TransformationTriggerBuilder<I extends CoreEntity> {
         this.errorHandlers = new ArrayList<>();
     }
 
+    public Class<I> getEntityClass() {
+        return entityClass;
+    }
+
     /**
      * Configures the type of entity that the transformation trigger will process.
      */
-    public TransformationTriggerBuilder<I> withEntityClass(Class<I> entityClass) {
+    public TransformationTriggerBuilder<I, O> withEntityClass(Class<I> entityClass) {
         this.entityClass = entityClass;
         return this;
     }
@@ -44,7 +46,7 @@ public class TransformationTriggerBuilder<I extends CoreEntity> {
     /**
      * Configures the {@link SchemaValidator} that the transformation trigger should use.
      */
-    public TransformationTriggerBuilder<I> withValidator(SchemaValidator validator) {
+    public TransformationTriggerBuilder<I, O> withValidator(SchemaValidator validator) {
         this.validator = validator;
         return this;
     }
@@ -52,7 +54,7 @@ public class TransformationTriggerBuilder<I extends CoreEntity> {
     /**
      * Configures an, optional, retry policy that the transformation trigger can use.
      */
-    public TransformationTriggerBuilder<I> withRetryPolicy(TransformationTriggerRetryPolicy<I> retryPolicy) {
+    public TransformationTriggerBuilder<I, O> withRetryPolicy(TransformationTriggerRetryPolicy<CoreEntity> retryPolicy) {
         this.retryPolicy = retryPolicy;
         return this;
     }
@@ -61,7 +63,7 @@ public class TransformationTriggerBuilder<I extends CoreEntity> {
      * Configures an additional non-input-type-specific filter for the transformation trigger that allows filtering of
      * certain input data.
      */
-    public TransformationTriggerBuilder<I> withGenericFilter(TransformationTriggerFilter<CoreEntity> filter) {
+    public TransformationTriggerBuilder<I, O> withGenericFilter(TransformationTriggerFilter<I> filter) {
         this.genericFilters.add(filter);
         return this;
     }
@@ -70,7 +72,7 @@ public class TransformationTriggerBuilder<I extends CoreEntity> {
      * Configures an additional input-type-specific filter for the transformation trigger that allows filtering of
      * certain input data.
      */
-    public TransformationTriggerBuilder<I> withFilter(TransformationTriggerFilter<I> filter) {
+    public TransformationTriggerBuilder<I, O> withFilter(TransformationTriggerFilter<I> filter) {
         this.filters.add(filter);
         return this;
     }
@@ -79,8 +81,8 @@ public class TransformationTriggerBuilder<I extends CoreEntity> {
      * Configures an additional non-input-type-specific filter for the transformation trigger that allows filtering of
      * certain input data.
      */
-    public TransformationTriggerBuilder<I> withOutputChannel(
-            TransformationTriggerOutputChannel<I, ? extends CoreEntity> outputChannel) {
+    public TransformationTriggerBuilder<I, O> withOutputChannel(
+            TransformationTriggerOutputChannel<I, ? extends O> outputChannel) {
         this.outputChannels.add(outputChannel);
         return this;
     }
@@ -89,7 +91,7 @@ public class TransformationTriggerBuilder<I extends CoreEntity> {
      * Configures an additional validation listener for the transformation trigger, that allows to listen for validation
      * failure events.
      */
-    public TransformationTriggerBuilder<I> withValidationListener(
+    public TransformationTriggerBuilder<I, O> withValidationListener(
             TransformationTriggerValidationListener<I> validationListener) {
         this.validationListeners.add(validationListener);
         return this;
@@ -99,7 +101,7 @@ public class TransformationTriggerBuilder<I extends CoreEntity> {
      * Configures an additional error listener for the transformation trigger, that allows to handle errors that occur
      * during transformation.
      */
-    public TransformationTriggerBuilder<I> withErrorHandler(TransformationTriggerErrorHandler<I> errorHandler) {
+    public TransformationTriggerBuilder<I, O> withErrorHandler(TransformationTriggerErrorHandler<I> errorHandler) {
         this.errorHandlers.add(errorHandler);
         return this;
     }
@@ -107,7 +109,7 @@ public class TransformationTriggerBuilder<I extends CoreEntity> {
     /**
      * Builds the actual {@link TransformationTrigger}.
      */
-    public TransformationTrigger<I> build() {
+    public TransformationTrigger<I, O> build() {
         if (entityClass == null) {
             throw new TransformationTriggerBuildingFailedException("Entity class is missing");
         }
@@ -116,10 +118,11 @@ public class TransformationTriggerBuilder<I extends CoreEntity> {
             throw new TransformationTriggerBuildingFailedException("Validator is missing");
         }
 
-        TransformationTrigger<I> transformationTrigger = new TransformationTrigger<>(entityClass, validator, mapper);
+        TransformationTrigger<I, O> transformationTrigger = createTransformationTrigger();
+
         transformationTrigger.setRetryPolicy(retryPolicy);
 
-        for (TransformationTriggerFilter<CoreEntity> genericFilter : genericFilters) {
+        for (TransformationTriggerFilter<I> genericFilter : genericFilters) {
             transformationTrigger.addGenericFilter(genericFilter);
         }
 
@@ -127,7 +130,7 @@ public class TransformationTriggerBuilder<I extends CoreEntity> {
             transformationTrigger.addFilter(filter);
         }
 
-        for (TransformationTriggerOutputChannel<I, ? extends CoreEntity> outputChannel : outputChannels) {
+        for (TransformationTriggerOutputChannel<I, ? extends O> outputChannel : outputChannels) {
             transformationTrigger.addOutputChannel(outputChannel);
         }
 
@@ -141,4 +144,6 @@ public class TransformationTriggerBuilder<I extends CoreEntity> {
 
         return transformationTrigger;
     }
+
+    protected abstract TransformationTrigger<I, O> createTransformationTrigger();
 }

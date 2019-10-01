@@ -60,6 +60,10 @@
             <groupId>com.avanzarit.platform.saas.aws</groupId>
             <artifactId>util-test</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.avanzarit.platform.saas.aws</groupId>
+            <artifactId>core-model</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

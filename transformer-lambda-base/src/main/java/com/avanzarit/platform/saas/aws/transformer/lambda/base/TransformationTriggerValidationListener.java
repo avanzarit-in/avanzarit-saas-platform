@@ -1,6 +1,5 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
-import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import com.avanzarit.platform.saas.aws.util.UpdateInfo;
 
@@ -11,7 +10,7 @@ import java.util.List;
  *
  * @param <I> The type of input entities that this listener supports.
  */
-public interface TransformationTriggerValidationListener<I extends CoreEntity> {
+public interface TransformationTriggerValidationListener<I> {
     /**
      * Notifies the listener that validation has failed and provides it with the relevant information.
      *

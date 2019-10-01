@@ -1,8 +1,8 @@
 package com.avanzarit.platform.saas.aws.lambda.eventhandler;
 
 import com.amazonaws.services.s3.model.S3Event;
-import com.avanzarit.platform.saas.aws.lambda.processors.DynamoRecordProcessor;
 import com.avanzarit.platform.saas.aws.lambda.EntityTrigger;
+import com.avanzarit.platform.saas.aws.lambda.processors.impl.DynamoDbStreamRecordProcessor;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 
 /**
@@ -18,7 +18,7 @@ public interface S3EventHandler {
     void handleEvent(CmwContext cmwContext, S3Event event);
 
     /**
-     * Adds an entity trigger for a table to the {@link DynamoRecordProcessor}.
+     * Adds an entity trigger for a table to the {@link DynamoDbStreamRecordProcessor}.
      */
     void addTrigger(String tableName, EntityTrigger<?> trigger);
 }
