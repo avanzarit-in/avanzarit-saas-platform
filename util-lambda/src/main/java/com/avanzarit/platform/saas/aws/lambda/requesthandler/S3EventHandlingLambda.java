@@ -11,7 +11,6 @@ import com.avanzarit.platform.saas.aws.lambda.LambdaCmwContextFactory;
 import com.avanzarit.platform.saas.aws.lambda.LambdaLoggingConfigurator;
 import com.avanzarit.platform.saas.aws.lambda.LambdaRegion;
 import com.avanzarit.platform.saas.aws.lambda.eventhandler.S3EventHandler;
-import com.avanzarit.platform.saas.aws.lambda.processors.impl.DynamoDbStreamRecordProcessor;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +25,7 @@ public abstract class S3EventHandlingLambda<T extends S3EventHandler> implements
 
     private static final Logger LOGGER = LogManager.getLogger(S3EventHandlingLambda.class);
 
-    private T s3EventHandler;
+    private S3EventHandler s3EventHandler;
     private CmwContext cmwContext;
 
     @Override
@@ -93,9 +92,9 @@ public abstract class S3EventHandlingLambda<T extends S3EventHandler> implements
     }
 
     /**
-     * Adds an entity trigger for a table to the {@link DynamoDbStreamRecordProcessor}.
+     * Adds an entity trigger.
      */
-    public void addTrigger(String tableName, EntityTrigger<?> trigger) {
-        s3EventHandler.addTrigger(tableName, trigger);
+    public <T> void addTrigger(EntityTrigger<T> trigger) {
+        s3EventHandler.addTrigger(trigger);
     }
 }

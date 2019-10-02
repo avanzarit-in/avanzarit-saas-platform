@@ -10,6 +10,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>signature-lambda</artifactId>
+    <dependencies>
+        <dependency>
+            <groupId>com.avanzarit.platform.saas.aws</groupId>
+            <artifactId>util-lambda</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.avanzarit.platform.saas.aws</groupId>
+            <artifactId>transformer-lambda-base</artifactId>
+        </dependency>
+    </dependencies>
 
 
 </project>

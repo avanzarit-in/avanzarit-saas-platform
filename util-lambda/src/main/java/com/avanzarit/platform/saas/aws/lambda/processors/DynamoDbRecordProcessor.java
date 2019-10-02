@@ -2,6 +2,7 @@ package com.avanzarit.platform.saas.aws.lambda.processors;
 
 import com.avanzarit.platform.saas.aws.dynamo.DynamoEntity;
 import com.avanzarit.platform.saas.aws.lambda.EntityTrigger;
+import com.avanzarit.platform.saas.aws.util.CmwContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,4 +27,6 @@ public abstract class DynamoDbRecordProcessor<T extends DynamoEntity> {
     public Map<String, EntityTrigger<? extends DynamoEntity>> getTriggers() {
         return triggers;
     }
+
+    public abstract void process(CmwContext cmwContext, T entity);
 }

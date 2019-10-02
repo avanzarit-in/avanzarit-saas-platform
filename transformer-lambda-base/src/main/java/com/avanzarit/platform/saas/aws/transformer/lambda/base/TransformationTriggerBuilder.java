@@ -1,8 +1,6 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
 import com.avanzarit.platform.saas.aws.core.model.CoreEntity;
-import com.avanzarit.platform.saas.aws.core.validation.Validator;
-import com.avanzarit.platform.saas.aws.core.validation.impl.jsonschema.SchemaValidator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +13,6 @@ import java.util.List;
 public abstract class TransformationTriggerBuilder<I, O> {
 
     private Class<I> entityClass;
-    private Validator validator;
     private TransformationTriggerRetryPolicy<CoreEntity> retryPolicy;
     private List<TransformationTriggerFilter<I>> genericFilters;
     private List<TransformationTriggerFilter<I>> filters;
@@ -40,14 +37,6 @@ public abstract class TransformationTriggerBuilder<I, O> {
      */
     public TransformationTriggerBuilder<I, O> withEntityClass(Class<I> entityClass) {
         this.entityClass = entityClass;
-        return this;
-    }
-
-    /**
-     * Configures the {@link SchemaValidator} that the transformation trigger should use.
-     */
-    public TransformationTriggerBuilder<I, O> withValidator(SchemaValidator validator) {
-        this.validator = validator;
         return this;
     }
 
@@ -112,10 +101,6 @@ public abstract class TransformationTriggerBuilder<I, O> {
     public TransformationTrigger<I, O> build() {
         if (entityClass == null) {
             throw new TransformationTriggerBuildingFailedException("Entity class is missing");
-        }
-
-        if (validator == null) {
-            throw new TransformationTriggerBuildingFailedException("Validator is missing");
         }
 
         TransformationTrigger<I, O> transformationTrigger = createTransformationTrigger();
