@@ -21,7 +21,7 @@ import java.util.Map;
  * on the table it will send the events to the appropriate {@link EntityTrigger} instances (if any are registered). It
  * uses the {@link DynamoDbEntityTriggerCaller} to provide the mapping between the DynamoDb streams format and Java objects.
  */
-public class DynamoDbStreamRecordProcessor<T extends DynamoEntity> extends DynamoDbRecordProcessor {
+public class DynamoDbStreamRecordProcessor extends DynamoDbRecordProcessor<DynamodbStreamRecord> {
     private static final Logger LOGGER = LogManager.getLogger(DynamoDbStreamRecordProcessor.class);
 
     /**
@@ -52,14 +52,14 @@ public class DynamoDbStreamRecordProcessor<T extends DynamoEntity> extends Dynam
 
             LOGGER.debug("Parsed tablename: " + stn);
 
-            EntityTrigger et = (EntityTrigger) getTriggers().get(stn.getTable());
+            EntityTrigger<? extends DynamoEntity> et = getTriggers().get(stn.getTable());
 
             LOGGER.debug("Update on " + tableName + " - using trigger " + et);
 
             if (et != null) {
                 LOGGER.debug("Calling EntityTrigger " + et);
 
-                DynamoDbEntityTriggerCaller<T> etc = new DynamoDbEntityTriggerCaller<T>(et);
+                DynamoDbEntityTriggerCaller<DynamoEntity> etc = new DynamoDbEntityTriggerCaller<DynamoEntity>((EntityTrigger<DynamoEntity>) et);
                 etc.call(cmwContext, oldImage, newImage);
             }
             LOGGER.debug("Finished processing");

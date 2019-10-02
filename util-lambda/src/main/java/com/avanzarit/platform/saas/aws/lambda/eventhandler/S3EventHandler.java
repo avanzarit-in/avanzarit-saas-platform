@@ -1,6 +1,6 @@
 package com.avanzarit.platform.saas.aws.lambda.eventhandler;
 
-import com.amazonaws.services.s3.model.S3Event;
+import com.amazonaws.services.lambda.runtime.events.S3Event;
 import com.avanzarit.platform.saas.aws.lambda.EntityTrigger;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 

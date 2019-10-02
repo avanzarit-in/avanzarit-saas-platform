@@ -1,7 +1,6 @@
-package com.avanzarit.platform.saas.aws.lambda.processors.impl;
+package com.avanzarit.platform.saas.aws.lambda.processors;
 
 import com.avanzarit.platform.saas.aws.lambda.EntityTrigger;
-import com.avanzarit.platform.saas.aws.s3.S3Item;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +8,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
-public class S3ItemProcessor<T extends S3Item<T>> {
+public abstract class S3ItemProcessor<T> {
     private static final Logger LOGGER = LogManager.getLogger(S3ItemProcessor.class);
 
     private List<EntityTrigger<T>> triggers = new ArrayList<>();
@@ -28,7 +27,5 @@ public class S3ItemProcessor<T extends S3Item<T>> {
         return triggers;
     }
 
-    public void process(CmwContext cmwContext, T entity) {
-
-    }
+    public abstract void process(CmwContext cmwContext, T entity);
 }

@@ -6,6 +6,7 @@ import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.KinesisEvent;
+import com.avanzarit.platform.saas.aws.dynamo.DynamoEntity;
 import com.avanzarit.platform.saas.aws.lambda.EntityTrigger;
 import com.avanzarit.platform.saas.aws.lambda.LambdaCmwContextFactory;
 import com.avanzarit.platform.saas.aws.lambda.LambdaLoggingConfigurator;
@@ -94,7 +95,7 @@ public abstract class KinesisStreamEventHandlingLambda<T extends KinesisEventHan
     /**
      * Adds an entity trigger for a table to the {@link DynamoDbStreamRecordProcessor}.
      */
-    public void addTrigger(String tableName, EntityTrigger<?> trigger) {
+    public void addTrigger(String tableName, EntityTrigger<? extends DynamoEntity> trigger) {
         kinesisEventHandler.addTrigger(tableName, trigger);
     }
 }

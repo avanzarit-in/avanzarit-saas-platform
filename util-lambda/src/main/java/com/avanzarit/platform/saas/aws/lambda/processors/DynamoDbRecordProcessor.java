@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class DynamoDbRecordProcessor<T extends DynamoEntity> {
+public abstract class DynamoDbRecordProcessor<T> {
     private static final Logger LOGGER = LogManager.getLogger(DynamoDbRecordProcessor.class);
 
     private Map<String, EntityTrigger<? extends DynamoEntity>> triggers = new HashMap<>();

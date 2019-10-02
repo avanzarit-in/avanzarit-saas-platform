@@ -266,8 +266,8 @@ public class CmwContext {
     public void flushMetrics() { 
         if (amazonCloudWatch != null) { 
             if (!metricCache.isEmpty()) { 
-                PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest() 
-                        .withNamespace("Philips/Middleware/" + prefix)
+                PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest()
+                        .withNamespace("AvanzarIT/SAAS/Platform/" + prefix)
                         .withMetricData(metricCache.stream()
                                         .map((metric) -> metric.createMetric(prefix, layer)) 
                                         .collect(Collectors.toList()) 

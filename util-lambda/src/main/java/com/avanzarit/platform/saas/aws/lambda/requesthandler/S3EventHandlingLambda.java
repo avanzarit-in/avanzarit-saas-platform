@@ -5,12 +5,13 @@ import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.amazonaws.services.s3.model.S3Event;
+import com.amazonaws.services.lambda.runtime.events.S3Event;
 import com.avanzarit.platform.saas.aws.lambda.EntityTrigger;
 import com.avanzarit.platform.saas.aws.lambda.LambdaCmwContextFactory;
 import com.avanzarit.platform.saas.aws.lambda.LambdaLoggingConfigurator;
 import com.avanzarit.platform.saas.aws.lambda.LambdaRegion;
 import com.avanzarit.platform.saas.aws.lambda.eventhandler.S3EventHandler;
+import com.avanzarit.platform.saas.aws.lambda.metrics.BatchSizeMetric;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,7 +26,7 @@ public abstract class S3EventHandlingLambda<T extends S3EventHandler> implements
 
     private static final Logger LOGGER = LogManager.getLogger(S3EventHandlingLambda.class);
 
-    private S3EventHandler s3EventHandler;
+    private T s3EventHandler;
     private CmwContext cmwContext;
 
     @Override
@@ -52,14 +53,11 @@ public abstract class S3EventHandlingLambda<T extends S3EventHandler> implements
 
             onInvoke(cmwContext);
 
-            /**
+            if (event != null) {
+                cmwContext.putMetrics(new BatchSizeMetric(context.getFunctionName(), event.getRecords().size()));
+                s3EventHandler.handleEvent(cmwContext, event);
+            }
 
-             if (event != null) {
-             cmwContext.putMetrics(new BatchSizeMetric(context.getFunctionName(), event.getRecords().size()));
-
-             kinesisEventHandler.handleEvent(cmwContext, event);
-             }
-             */
             onFinish(cmwContext);
             cmwContext.flushMetrics();
         } catch (Exception e) {

@@ -14,10 +14,10 @@ import org.apache.logging.log4j.Logger;
 public class DynamoDbEventHandler<T extends DynamoEntity> {
     private static final Logger LOGGER = LogManager.getLogger(DynamoDbEventHandler.class);
 
-    private DynamoDbStreamRecordProcessor<? extends DynamoEntity> dynamoStreamRecordProcessor;
+    private DynamoDbStreamRecordProcessor dynamoStreamRecordProcessor;
 
     public DynamoDbEventHandler() {
-        this.dynamoStreamRecordProcessor = new DynamoDbStreamRecordProcessor<>();
+        this.dynamoStreamRecordProcessor = new DynamoDbStreamRecordProcessor();
     }
 
     /**

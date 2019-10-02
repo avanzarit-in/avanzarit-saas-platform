@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
  * Based on the entity it will send the events to the appropriate {@link EntityTrigger} instances (if any are registered). It
  * uses the {@link DynamoDbEntityTriggerCaller} to provide the mapping between the object format and Java objects.
  */
-public class DynamoDbItemRecordProcessor<T extends DynamoEntity> extends DynamoDbRecordProcessor {
+public class DynamoDbItemRecordProcessor extends DynamoDbRecordProcessor<DynamoEntity> {
     private static final Logger LOGGER = LogManager.getLogger(DynamoDbItemRecordProcessor.class);
 
     public void process(CmwContext cmwContext, DynamoEntity entity) {
@@ -32,14 +32,14 @@ public class DynamoDbItemRecordProcessor<T extends DynamoEntity> extends DynamoD
 
             LOGGER.debug("Parsed tablename: " + stn);
 
-            EntityTrigger<DynamoEntity> et = (EntityTrigger<DynamoEntity>) getTriggers().get(stn.getTable());
+            EntityTrigger<? extends DynamoEntity> et = getTriggers().get(stn.getTable());
 
             LOGGER.debug("Update on " + tableName + " - using trigger " + et);
 
             if (et != null) {
                 LOGGER.debug("Calling EntityTrigger " + et);
 
-                DynamoDbEntityTriggerCaller<DynamoEntity> etc = new DynamoDbEntityTriggerCaller<>(et);
+                DynamoDbEntityTriggerCaller<DynamoEntity> etc = new DynamoDbEntityTriggerCaller<>((EntityTrigger<DynamoEntity>) et);
                 etc.call(cmwContext, entity);
             }
             LOGGER.debug("Finished processing");

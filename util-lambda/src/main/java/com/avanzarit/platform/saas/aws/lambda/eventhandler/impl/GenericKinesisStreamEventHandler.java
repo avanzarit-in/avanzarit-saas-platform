@@ -16,10 +16,10 @@ import org.apache.logging.log4j.Logger;
 public abstract class GenericKinesisStreamEventHandler<T extends DynamoEntity> implements KinesisEventHandler {
     private static final Logger LOGGER = LogManager.getLogger(GenericKinesisStreamEventHandler.class);
 
-    private DynamoDbItemRecordProcessor<T> recordProcessor;
+    private DynamoDbItemRecordProcessor recordProcessor;
 
     public GenericKinesisStreamEventHandler() {
-        this.recordProcessor = new DynamoDbItemRecordProcessor<>();
+        this.recordProcessor = new DynamoDbItemRecordProcessor();
     }
 
     /**
@@ -49,7 +49,7 @@ public abstract class GenericKinesisStreamEventHandler<T extends DynamoEntity> i
     /**
      * Adds an entity trigger for a table to the {@link DynamoDbStreamRecordProcessor}.
      */
-    public void addTrigger(String tableName, EntityTrigger<?> trigger) {
+    public void addTrigger(String tableName, EntityTrigger<? extends DynamoEntity> trigger) {
         recordProcessor.addTrigger(tableName, trigger);
     }
 }

@@ -5,7 +5,6 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException;
 import com.amazonaws.services.dynamodbv2.datamodeling.ItemConverter;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.avanzarit.platform.saas.aws.dynamo.DynamoEntity;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import com.avanzarit.platform.saas.aws.util.UpdateInfo;
 import org.apache.logging.log4j.LogManager;
@@ -17,7 +16,7 @@ import java.util.Map;
  * The EntityTriggerCaller takes care of the conversion of the DynamoDb streams format to a Java object before providing
  * the old and the new version of an entity to an entity trigger.
  */
-public class DynamoDbEntityTriggerCaller<T extends DynamoEntity> {
+public class DynamoDbEntityTriggerCaller<T> {
 
     private static final Logger LOGGER = LogManager.getLogger(DynamoDbEntityTriggerCaller.class);
 
