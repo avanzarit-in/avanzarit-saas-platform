@@ -21,5 +21,5 @@ public interface KinesisEventHandler {
     /**
      * Adds an entity trigger for a table to the {@link DynamoDbStreamRecordProcessor}.
      */
-    void addTrigger(String tableName, EntityTrigger<? extends DynamoEntity> trigger);
+    void addTrigger(String tableName, EntityTrigger<DynamoEntity> trigger);
 }

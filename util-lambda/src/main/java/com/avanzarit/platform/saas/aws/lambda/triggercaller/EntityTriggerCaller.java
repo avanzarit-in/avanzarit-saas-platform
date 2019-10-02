@@ -1,10 +1,12 @@
-package com.avanzarit.platform.saas.aws.lambda;
+package com.avanzarit.platform.saas.aws.lambda.triggercaller;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.ConversionSchema;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMappingException;
 import com.amazonaws.services.dynamodbv2.datamodeling.ItemConverter;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.avanzarit.platform.saas.aws.lambda.EntityTrigger;
+import com.avanzarit.platform.saas.aws.lambda.EntityTriggerCallFailedException;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import com.avanzarit.platform.saas.aws.util.UpdateInfo;
 import org.apache.logging.log4j.LogManager;
@@ -16,16 +18,16 @@ import java.util.Map;
  * The EntityTriggerCaller takes care of the conversion of the DynamoDb streams format to a Java object before providing
  * the old and the new version of an entity to an entity trigger.
  */
-public class DynamoDbEntityTriggerCaller<T> {
+public class EntityTriggerCaller<T> {
 
-    private static final Logger LOGGER = LogManager.getLogger(DynamoDbEntityTriggerCaller.class);
+    private static final Logger LOGGER = LogManager.getLogger(EntityTriggerCaller.class);
 
     private EntityTrigger<T> trigger;
 
     /**
      * Creates a new EntityTriggerCaller wrapping an {@link EntityTrigger}.
      */
-    public DynamoDbEntityTriggerCaller(EntityTrigger<T> trigger) {
+    public EntityTriggerCaller(EntityTrigger<T> trigger) {
         this.trigger = trigger;
     }
 

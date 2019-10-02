@@ -19,5 +19,5 @@ public interface S3EventHandler<T> {
     /**
      * Adds an entity trigger.
      */
-    void addTrigger(EntityTrigger<T> trigger);
+    void addTrigger(String bucketName, EntityTrigger<T> trigger);
 }

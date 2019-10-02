@@ -49,7 +49,7 @@ public abstract class GenericKinesisStreamEventHandler<T extends DynamoEntity> i
     /**
      * Adds an entity trigger for a table to the {@link DynamoDbStreamRecordProcessor}.
      */
-    public void addTrigger(String tableName, EntityTrigger<? extends DynamoEntity> trigger) {
+    public void addTrigger(String tableName, EntityTrigger<DynamoEntity> trigger) {
         recordProcessor.addTrigger(tableName, trigger);
     }
 }

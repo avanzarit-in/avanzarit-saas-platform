@@ -1,8 +1,10 @@
 package com.avanzarit.platform.saas.aws.lambda;
 
+import com.avanzarit.platform.saas.aws.lambda.triggercaller.EntityTriggerCaller;
+
 /**
  * The EntityTriggerCallFailedException is thrown when calling an {@link EntityTrigger} fails from the
- * {@link DynamoDbEntityTriggerCaller}. The exception tracks whether the error was already handled by the {@link EntityTrigger}
+ * {@link EntityTriggerCaller}. The exception tracks whether the error was already handled by the {@link EntityTrigger}
  * itself or not.
  * <p>
  * One of the side-effects of not handling such exceptions properly in the lambda and rethrowing it from the lambda

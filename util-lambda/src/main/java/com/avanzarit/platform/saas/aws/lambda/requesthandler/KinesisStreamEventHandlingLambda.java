@@ -95,7 +95,7 @@ public abstract class KinesisStreamEventHandlingLambda<T extends KinesisEventHan
     /**
      * Adds an entity trigger for a table to the {@link DynamoDbStreamRecordProcessor}.
      */
-    public void addTrigger(String tableName, EntityTrigger<? extends DynamoEntity> trigger) {
+    public void addTrigger(String tableName, EntityTrigger<DynamoEntity> trigger) {
         kinesisEventHandler.addTrigger(tableName, trigger);
     }
 }

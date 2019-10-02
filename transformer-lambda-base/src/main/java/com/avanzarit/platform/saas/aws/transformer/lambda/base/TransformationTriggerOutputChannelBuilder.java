@@ -1,14 +1,6 @@
 package com.avanzarit.platform.saas.aws.transformer.lambda.base;
 
 import com.avanzarit.platform.saas.aws.core.validation.Validator;
-import com.avanzarit.platform.saas.aws.dynamo.DynamoDbRepository;
-import com.avanzarit.platform.saas.aws.dynamo.StructuredTableNameParser;
-import com.avanzarit.platform.saas.aws.s3.StructuredS3BucketNameParser;
-import com.avanzarit.platform.saas.aws.transformer.lambda.base.outputchannel.DynamoDbTransformationTriggerOutputChannel;
-import com.avanzarit.platform.saas.aws.transformer.lambda.base.outputchannel.KinesisStreamTransformationTriggerOutputChannel;
-import com.avanzarit.platform.saas.aws.transformer.lambda.base.outputchannel.S3TransformationTriggerOutputChannel;
-import com.avanzarit.platform.saas.aws.transformer.lambda.base.writers.KinesisStreamOutputWriter;
-import com.avanzarit.platform.saas.aws.transformer.lambda.base.writers.S3OutputWriter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +12,7 @@ import java.util.List;
  * @param <I> The type of input entity that the output channel will process.
  * @param <O> The type of output entity that the output channel will generate.
  */
-public class TransformationTriggerOutputChannelBuilder<I, O> {
+public abstract class TransformationTriggerOutputChannelBuilder<I, O> {
     private String name;
     private Validator validator;
     private Transformer<I, O> transformer;
@@ -29,11 +21,6 @@ public class TransformationTriggerOutputChannelBuilder<I, O> {
     private List<TransformerInputFilter<I>> preTransformFilters;
     private List<TransformerOutputFilter<I, O>> genericPostTransformFilters;
     private List<TransformerOutputFilter<I, O>> postTransformFilters;
-    private StructuredTableNameParser tableNameParser;
-    private DynamoDbRepository<O> outputRepository;
-    private KinesisStreamOutputWriter<O> kinesisStreamOutputWriter;
-    private S3OutputWriter<O> s3OutputWriter;
-    private StructuredS3BucketNameParser s3BucketNameParser;
     private List<TransformerOutputSavedListener<I, O>> genericOutputSavedListeners;
     private List<TransformerOutputSavedListener<I, O>> outputSavedListeners;
     private List<TransformerPreTransformationListener<I>> preTransformationListeners;
@@ -155,49 +142,6 @@ public class TransformationTriggerOutputChannelBuilder<I, O> {
     }
 
     /**
-     * The {@link StructuredTableNameParser} instance that the output channel will use to generate and parse table
-     * names.
-     */
-    public TransformationTriggerOutputChannelBuilder<I, O> withTableNameParser(
-            StructuredTableNameParser tableNameParser) {
-        this.tableNameParser = tableNameParser;
-        return this;
-    }
-
-    public TransformationTriggerOutputChannelBuilder<I, O> withS3BucketParser(
-            StructuredS3BucketNameParser s3BucketParser) {
-        this.s3BucketNameParser = s3BucketParser;
-        return this;
-    }
-
-    /**
-     * The {@link DynamoDbRepository} class to use for storing the output entity.
-     */
-    public TransformationTriggerOutputChannelBuilder<I, O> withOutputRepository(
-            DynamoDbRepository<O> outputRepository) {
-        this.outputRepository = outputRepository;
-        return this;
-    }
-
-    /**
-     * The {@link KinesisStreamOutputWriter} class to use for storing the output entity.
-     */
-    public TransformationTriggerOutputChannelBuilder<I, O> withOutputKinesisStreamWriter(
-            KinesisStreamOutputWriter<O> kinesisStreamOutputWriter) {
-        this.kinesisStreamOutputWriter = kinesisStreamOutputWriter;
-        return this;
-    }
-
-    /**
-     * The {@link KinesisStreamOutputWriter} class to use for storing the output entity.
-     */
-    public TransformationTriggerOutputChannelBuilder<I, O> withOutputS3Writer(
-            S3OutputWriter<O> s3Writer) {
-        this.s3OutputWriter = s3Writer;
-        return this;
-    }
-
-    /**
      * Adds a {@link TransformerOutputSavedListener} that is not entity-type-specific (or generic) to the output
      * channel. This listener is invoked after the output has been saved.
      *
@@ -307,33 +251,7 @@ public class TransformationTriggerOutputChannelBuilder<I, O> {
             throw new TransformationTriggerBuildingFailedException("No transformer was specified");
         }
 
-        if (tableNameParser == null && outputRepository != null) {
-            throw new TransformationTriggerBuildingFailedException("No table name parser was specified");
-        }
-
-        if (s3BucketNameParser == null && s3OutputWriter != null) {
-            throw new TransformationTriggerBuildingFailedException("No s3 bucket name parser was specified");
-        }
-
-        if (s3OutputWriter == null && outputRepository == null && kinesisStreamOutputWriter == null) {
-            throw new TransformationTriggerBuildingFailedException(
-                    "No output DynamoDB Repository or S3 bucket or Kinesis Stream Writer was specified"
-            );
-        }
-
         TransformationTriggerOutputChannel<I, O> outputChannel = null;
-
-        if (outputRepository != null) {
-            outputChannel = new DynamoDbTransformationTriggerOutputChannel<>(name, transformer, validator, tableNameParser, outputRepository);
-        }
-
-        if (kinesisStreamOutputWriter != null) {
-            outputChannel = new KinesisStreamTransformationTriggerOutputChannel<>(name, transformer, validator, kinesisStreamOutputWriter);
-        }
-
-        if (s3OutputWriter != null) {
-            outputChannel = new S3TransformationTriggerOutputChannel<>(name, transformer, validator, s3BucketNameParser, s3OutputWriter);
-        }
 
         if (supportsMultipleOutputEntities) {
             outputChannel.setSupportsMultipleOutputEntities(supportsMultipleOutputEntities);

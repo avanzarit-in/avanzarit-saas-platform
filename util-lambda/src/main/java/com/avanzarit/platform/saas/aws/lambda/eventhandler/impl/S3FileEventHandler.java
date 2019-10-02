@@ -18,7 +18,7 @@ public class S3FileEventHandler implements S3EventHandler<S3Item<File>> {
     }
 
     @Override
-    public void addTrigger(EntityTrigger<S3Item<File>> trigger) {
-        processor.addTrigger(trigger);
+    public void addTrigger(String bucketName, EntityTrigger<S3Item<File>> trigger) {
+        processor.addTrigger(bucketName, trigger);
     }
 }

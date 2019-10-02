@@ -5,11 +5,11 @@ import com.amazonaws.services.lambda.runtime.events.DynamodbEvent.DynamodbStream
 import com.avanzarit.platform.saas.aws.dynamo.DynamoEntity;
 import com.avanzarit.platform.saas.aws.dynamo.StructuredTableName;
 import com.avanzarit.platform.saas.aws.dynamo.StructuredTableNameParser;
-import com.avanzarit.platform.saas.aws.lambda.DynamoDbEntityTriggerCaller;
 import com.avanzarit.platform.saas.aws.lambda.EntityTrigger;
 import com.avanzarit.platform.saas.aws.lambda.EntityTriggerCallFailedException;
 import com.avanzarit.platform.saas.aws.lambda.model.LambdaRouterRecord;
 import com.avanzarit.platform.saas.aws.lambda.processors.DynamoDbRecordProcessor;
+import com.avanzarit.platform.saas.aws.lambda.triggercaller.EntityTriggerCaller;
 import com.avanzarit.platform.saas.aws.util.CmwContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * The DynamoRecordProcessor provides functionality for processing events that were stored on a DynamoDb stream. Based
  * on the table it will send the events to the appropriate {@link EntityTrigger} instances (if any are registered). It
- * uses the {@link DynamoDbEntityTriggerCaller} to provide the mapping between the DynamoDb streams format and Java objects.
+ * uses the {@link EntityTriggerCaller} to provide the mapping between the DynamoDb streams format and Java objects.
  */
 public class DynamoDbStreamRecordProcessor extends DynamoDbRecordProcessor<DynamodbStreamRecord> {
     private static final Logger LOGGER = LogManager.getLogger(DynamoDbStreamRecordProcessor.class);
@@ -52,14 +52,14 @@ public class DynamoDbStreamRecordProcessor extends DynamoDbRecordProcessor<Dynam
 
             LOGGER.debug("Parsed tablename: " + stn);
 
-            EntityTrigger<? extends DynamoEntity> et = getTriggers().get(stn.getTable());
+            EntityTrigger<DynamoEntity> et = getTriggers().get(stn.getTable());
 
             LOGGER.debug("Update on " + tableName + " - using trigger " + et);
 
             if (et != null) {
                 LOGGER.debug("Calling EntityTrigger " + et);
 
-                DynamoDbEntityTriggerCaller<DynamoEntity> etc = new DynamoDbEntityTriggerCaller<DynamoEntity>((EntityTrigger<DynamoEntity>) et);
+                EntityTriggerCaller<DynamoEntity> etc = new EntityTriggerCaller<>(et);
                 etc.call(cmwContext, oldImage, newImage);
             }
             LOGGER.debug("Finished processing");

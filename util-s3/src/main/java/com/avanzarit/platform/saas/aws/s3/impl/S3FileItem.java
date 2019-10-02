@@ -14,8 +14,8 @@ import java.util.Map;
 public class S3FileItem extends S3Item<File> {
     private byte[] content;
 
-    public S3FileItem(File file, String itemKey, Map<String, String> s3ObjectMetadata) {
-        super(file, itemKey, s3ObjectMetadata);
+    public S3FileItem(File file, String itemKey, Map<String, String> s3ObjectMetadata, String bucketName, String folderPath) {
+        super(file, itemKey, s3ObjectMetadata, bucketName, folderPath);
 
         try {
             this.content = IOUtils.toByteArray(new FileInputStream(file));

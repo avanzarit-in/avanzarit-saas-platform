@@ -17,7 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * KinesisStreamHandlingLambda is a base class that allows subclasses to just handle the Kinesis events that are coming
+ * S3EventHandlingLambda is a base class that allows subclasses to just handle the S3 events that are coming
  * in without having to bother with all the boilerplate of the actual Lambda function invocation. The class provides
  * several lifecycle hooks that allow subclasses to implement custom logic without having to interact with the Lambda
  * handling code itself.
@@ -92,7 +92,7 @@ public abstract class S3EventHandlingLambda<T extends S3EventHandler> implements
     /**
      * Adds an entity trigger.
      */
-    public <T> void addTrigger(EntityTrigger<T> trigger) {
-        s3EventHandler.addTrigger(trigger);
+    public <T> void addTrigger(String bucketName, EntityTrigger<T> trigger) {
+        s3EventHandler.addTrigger(bucketName, trigger);
     }
 }

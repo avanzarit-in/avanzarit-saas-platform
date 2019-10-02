@@ -14,7 +14,7 @@ public class S3ObjectItem extends S3Item<S3Object> {
     private byte[] content;
 
     public S3ObjectItem(S3Object s3Object, String itemKey, Map<String, String> s3ObjectMetadata) {
-        super(s3Object, itemKey, s3ObjectMetadata);
+        super(s3Object, itemKey, s3ObjectMetadata, s3Object.getBucketName(), s3Object.getKey());
 
         try (InputStream content = s3Object.getObjectContent()) {
             this.content = IOUtils.toByteArray(content);

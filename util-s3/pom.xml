@@ -36,6 +36,10 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.avanzarit.platform.saas.aws</groupId>
+            <artifactId>util-cloudwatch</artifactId>
+        </dependency>
 
 
     </dependencies>
