@@ -23,6 +23,9 @@ provider "aws" {
   max_retries = 20
 }
 
+data "template_file" "lambda_s3_role_policy" {
+  template = "${file("${path.module}/policies/aws-lambda-execute-role-policy.json")}"
+}
 
 resource "aws_iam_role" "lambda_s3_role" {
   name = "lambda_s3_role"
@@ -39,6 +42,3 @@ resource "aws_iam_role_policy_attachment" "aws-lambda-execute-policy-attachment"
   policy_arn = "arn:aws:iam::aws:policy/AWSLambdaExecute"
 }
 
-data "template_file" "lambda_s3_role_policy" {
-  template = "${file("${path.module}/policies/aws-lambda-execute-role-policy.json")}"
-}
