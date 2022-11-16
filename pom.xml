@@ -35,7 +35,7 @@
         <aws.version>1.11.534</aws.version>
         <aws-lambda.version>1.1.0</aws-lambda.version>
         <camel.version>2.18.0</camel.version>
-        <jackson.version>2.9.10</jackson.version>
+        <jackson.version>2.12.7.1</jackson.version>
         <jolt.version>0.0.16</jolt.version>
 
         <guava.version>21.0</guava.version>
